@@ -27,11 +27,11 @@ export default function ExamIntegrityNotice({ onAccept, buttonLabel = 'Proceed' 
           </p>
           <p>
             Any attempt to create multiple accounts, use different email addresses,
-            register multiple times, or bypass examination rules may be detected
+            register multiple times, or bypass examination rules will be detected
             through our verification systems.
           </p>
           <p>
-            Candidates found attempting to gain multiple attempts may be automatically
+            Candidates found attempting to gain multiple attempts will be automatically
             disqualified and removed from the Prokip Agent Qualification Program.
           </p>
           <p>
