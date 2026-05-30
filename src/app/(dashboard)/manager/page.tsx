@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { LuUsers, LuFileText, LuCircleCheck, LuCircleX, LuClock, LuGraduationCap, LuDownload, LuLink, LuCopy, LuPlus, LuPower, LuPowerOff } from 'react-icons/lu'
+import { LuUsers, LuFileText, LuCircleCheck, LuCircleX, LuClock, LuGraduationCap, LuDownload, LuLink, LuCopy, LuPlus, LuPower, LuPowerOff, LuTrash2, LuChevronDown, LuChevronUp } from 'react-icons/lu'
 
 interface ReferralLink {
   id: string
@@ -34,6 +34,9 @@ export default function ManagerDashboard() {
   const [generatingLink, setGeneratingLink] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [togglingId, setTogglingId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [showAllLinks, setShowAllLinks] = useState(false)
 
   const loadData = async () => {
     try {
@@ -86,6 +89,20 @@ export default function ManagerDashboard() {
         setReferralLinks(prev => prev.map(l => l.id === linkId ? { ...l, isActive } : l))
       }
     } catch {} finally { setTogglingId(null) }
+  }
+
+  const handleDeleteLink = async (linkId: string) => {
+    setDeletingId(linkId)
+    try {
+      const res = await fetch('/api/referral-links', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ linkId }),
+      })
+      if (res.ok) {
+        setReferralLinks(prev => prev.filter(l => l.id !== linkId))
+      }
+    } catch {} finally { setDeletingId(null); setConfirmDeleteId(null) }
   }
 
   const copyLink = (link: ReferralLink) => {
@@ -166,50 +183,92 @@ export default function ManagerDashboard() {
 
           {referralLinks.length === 0 ? (
             <p className="text-sm text-[#94A3B8] text-center py-6">No referral links yet. Generate one to start onboarding agents.</p>
-          ) : (
-            <div className="space-y-2">
-              {[...activeLinks, ...inactiveLinks].map(link => {
-                const regUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/register/${link.code}`
-                return (
-                  <div key={link.id} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${link.isActive ? 'border-[#E2E8F0] bg-[#F8FAFC]' : 'border-[#E2E8F0]/50 bg-[#F8FAFC]/50 opacity-60'}`}>
-                    <div className="flex-1 min-w-0 mr-3">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <code className="text-sm font-mono text-[#1B2B4B] truncate">{regUrl}</code>
-                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${link.isActive ? 'bg-[#28a745]/10 text-[#28a745]' : 'bg-[#dc3545]/10 text-[#dc3545]'}`}>
-                          {link.isActive ? 'ACTIVE' : 'INACTIVE'}
-                        </span>
+          ) : (() => {
+            const sortedLinks = [...activeLinks, ...inactiveLinks]
+            const visibleLinks = showAllLinks ? sortedLinks : sortedLinks.slice(0, 3)
+            const hiddenCount = sortedLinks.length - 3
+            return (
+              <div className="space-y-2">
+                {visibleLinks.map(link => {
+                  const regUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/register/${link.code}`
+                  return (
+                    <div key={link.id} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${link.isActive ? 'border-[#E2E8F0] bg-[#F8FAFC]' : 'border-[#E2E8F0]/50 bg-[#F8FAFC]/50 opacity-60'}`}>
+                      <div className="flex-1 min-w-0 mr-3">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <code className="text-sm font-mono text-[#1B2B4B] truncate">{regUrl}</code>
+                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${link.isActive ? 'bg-[#28a745]/10 text-[#28a745]' : 'bg-[#dc3545]/10 text-[#dc3545]'}`}>
+                            {link.isActive ? 'ACTIVE' : 'INACTIVE'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-[#94A3B8]">
+                          <span><LuUsers className="w-3 h-3 inline mr-1" />{link.usedCount} registered</span>
+                          <span>Created {new Date(link.createdAt).toLocaleDateString()}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3 text-xs text-[#94A3B8]">
-                        <span><LuUsers className="w-3 h-3 inline mr-1" />{link.usedCount} registered</span>
-                        <span>Created {new Date(link.createdAt).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => copyLink(link)}
-                        className="p-2 rounded-lg hover:bg-[#E2E8F0] transition-colors text-[#1B2B4B]"
-                        title="Copy link"
-                      >
-                        {copiedId === link.id ? (
-                          <LuCircleCheck className="w-4 h-4 text-[#28a745]" />
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => copyLink(link)}
+                          className="p-2 rounded-lg hover:bg-[#E2E8F0] transition-colors text-[#1B2B4B]"
+                          title="Copy link"
+                        >
+                          {copiedId === link.id ? (
+                            <LuCircleCheck className="w-4 h-4 text-[#28a745]" />
+                          ) : (
+                            <LuCopy className="w-4 h-4" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleToggleLink(link.id, !link.isActive)}
+                          disabled={togglingId === link.id}
+                          className={`p-2 rounded-lg transition-colors disabled:opacity-50 ${link.isActive ? 'hover:bg-[#dc3545]/10 text-[#dc3545]' : 'hover:bg-[#28a745]/10 text-[#28a745]'}`}
+                          title={link.isActive ? 'Deactivate' : 'Reactivate'}
+                        >
+                          {link.isActive ? <LuPowerOff className="w-4 h-4" /> : <LuPower className="w-4 h-4" />}
+                        </button>
+                        {confirmDeleteId === link.id ? (
+                          <div className="flex items-center gap-1 ml-1">
+                            <button
+                              onClick={() => handleDeleteLink(link.id)}
+                              disabled={deletingId === link.id}
+                              className="px-2 py-1 rounded-lg text-xs font-semibold bg-[#dc3545] text-white hover:bg-[#dc3545]/90 disabled:opacity-50 transition-all"
+                            >
+                              {deletingId === link.id ? '...' : 'Confirm'}
+                            </button>
+                            <button
+                              onClick={() => setConfirmDeleteId(null)}
+                              className="px-2 py-1 rounded-lg text-xs font-semibold bg-[#E2E8F0] text-[#1B2B4B] hover:bg-[#E2E8F0]/70 transition-all"
+                            >
+                              Cancel
+                            </button>
+                          </div>
                         ) : (
-                          <LuCopy className="w-4 h-4" />
+                          <button
+                            onClick={() => setConfirmDeleteId(link.id)}
+                            className="p-2 rounded-lg hover:bg-[#dc3545]/10 text-[#94A3B8] hover:text-[#dc3545] transition-colors"
+                            title="Delete link"
+                          >
+                            <LuTrash2 className="w-4 h-4" />
+                          </button>
                         )}
-                      </button>
-                      <button
-                        onClick={() => handleToggleLink(link.id, !link.isActive)}
-                        disabled={togglingId === link.id}
-                        className={`p-2 rounded-lg transition-colors disabled:opacity-50 ${link.isActive ? 'hover:bg-[#dc3545]/10 text-[#dc3545]' : 'hover:bg-[#28a745]/10 text-[#28a745]'}`}
-                        title={link.isActive ? 'Deactivate' : 'Reactivate'}
-                      >
-                        {link.isActive ? <LuPowerOff className="w-4 h-4" /> : <LuPower className="w-4 h-4" />}
-                      </button>
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
+                  )
+                })}
+                {hiddenCount > 0 && (
+                  <button
+                    onClick={() => setShowAllLinks(!showAllLinks)}
+                    className="w-full py-2 text-sm font-medium text-[#1B2B4B] hover:text-[#F5B731] transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    {showAllLinks ? (
+                      <><LuChevronUp className="w-4 h-4" /> Show less</>
+                    ) : (
+                      <><LuChevronDown className="w-4 h-4" /> Show {hiddenCount} more link{hiddenCount > 1 ? 's' : ''}</>
+                    )}
+                  </button>
+                )}
+              </div>
+            )
+          })()}
         </div>
 
         {/* Search & Export */}

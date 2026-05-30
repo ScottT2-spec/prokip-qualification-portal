@@ -70,6 +70,33 @@ export async function POST(req: NextRequest) {
   }
 }
 
+export async function DELETE(req: NextRequest) {
+  try {
+    const session = await requireAuth(['STATE_MANAGER', 'ADMIN'])
+    const { linkId } = await req.json()
+
+    if (!linkId) {
+      return NextResponse.json({ error: 'linkId is required' }, { status: 400 })
+    }
+
+    const link = await prisma.referralLink.findUnique({ where: { id: linkId } })
+    if (!link) {
+      return NextResponse.json({ error: 'Link not found' }, { status: 404 })
+    }
+    if (session.role === 'STATE_MANAGER' && link.managerId !== session.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    await prisma.referralLink.delete({ where: { id: linkId } })
+
+    return NextResponse.json({ success: true })
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Server error'
+    const status = message === 'Unauthorized' ? 401 : message === 'Forbidden' ? 403 : 500
+    return NextResponse.json({ error: message }, { status })
+  }
+}
+
 export async function PATCH(req: NextRequest) {
   try {
     const session = await requireAuth(['STATE_MANAGER', 'ADMIN'])
