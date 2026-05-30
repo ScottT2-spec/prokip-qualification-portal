@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
-  LuDownload, LuTarget, LuPercent, LuClock, LuUsers,
+  LuTarget, LuPercent, LuClock, LuUsers,
   LuTrendingUp, LuTrendingDown, LuTimer, LuBarChart3,
-  LuCalendar, LuMedal, LuZap, LuChevronDown
+  LuCalendar, LuZap
 } from 'react-icons/lu'
 
 interface InsightsData {
@@ -30,19 +30,10 @@ interface InsightsData {
 
 type TrendView = 'daily' | 'weekly' | 'monthly'
 
-export default function AnalyticsPage() {
+export default function ManagerInsightsPage() {
   const [data, setData] = useState<InsightsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [trendView, setTrendView] = useState<TrendView>('daily')
-
-  // Agent list state (existing)
-  const [agents, setAgents] = useState<any[]>([])
-  const [total, setTotal] = useState(0)
-  const [page, setPage] = useState(1)
-  const [search, setSearch] = useState('')
-  const [stateFilter, setStateFilter] = useState('')
-  const [exporting, setExporting] = useState(false)
-  const [exportOpen, setExportOpen] = useState(false)
 
   useEffect(() => {
     fetch('/api/dashboard/insights')
@@ -51,52 +42,6 @@ export default function AnalyticsPage() {
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
-
-  const loadAgents = async () => {
-    const params = new URLSearchParams({ page: page.toString(), limit: '20' })
-    if (search) params.set('search', search)
-    if (stateFilter) params.set('state', stateFilter)
-    try {
-      const res = await fetch(`/api/agents?${params}`)
-      if (res.ok) { const d = await res.json(); setAgents(d.agents); setTotal(d.total) }
-    } catch {}
-  }
-  useEffect(() => { loadAgents() }, [page, search, stateFilter])
-
-  const handleExport = async (format: string) => {
-    setExporting(true)
-    try {
-      const params = new URLSearchParams({ format })
-      if (stateFilter) params.set('state', stateFilter)
-      const res = await fetch(`/api/export?${params}`)
-      if (res.ok) {
-        const blob = await res.blob()
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `prokip-export.${format === 'excel' ? 'xlsx' : format}`
-        a.click()
-        URL.revokeObjectURL(url)
-      }
-    } catch {} finally { setExporting(false) }
-  }
-
-  const getStatus = (agent: any) => {
-    if (!agent.quizAttempts || agent.quizAttempts.length === 0) return 'NOT_STARTED'
-    const latest = agent.quizAttempts[0]
-    if (latest.result) return latest.result.qualificationStatus
-    return latest.status
-  }
-
-  const statusColors: Record<string, string> = {
-    NOT_STARTED: 'bg-[#E2E8F0] text-[#94A3B8]',
-    IN_PROGRESS: 'bg-[#FEF3C7] text-[#F5B731]',
-    SUBMITTED: 'bg-[#007bff]/10 text-[#007bff]',
-    PASSED: 'bg-[#28a745]/10 text-[#28a745]',
-    FAILED: 'bg-[#dc3545]/10 text-[#dc3545]',
-  }
-
-  const inputClass = "bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm text-[#1B2B4B] outline-none transition-all focus:border-[#1B2B4B] focus:ring-[3px] focus:ring-[#1B2B4B]/10"
 
   if (loading) return (
     <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
@@ -108,54 +53,28 @@ export default function AnalyticsPage() {
   const dist = data?.scoreDistribution || {}
   const maxDist = Math.max(...Object.values(dist), 1)
 
-  // Trend data
   const trendData = data?.submissionTrends?.[trendView] || []
-  const trendItems = trendView === 'daily'
-    ? (trendData as { date: string; count: number }[])
-    : trendView === 'weekly'
-    ? (trendData as { week: string; count: number }[])
-    : (trendData as { month: string; count: number }[])
+  const trendItems = trendData as any[]
   const maxTrend = Math.max(...trendItems.map((t: any) => t.count || 0), 1)
 
   const distColors: Record<string, string> = {
-    '0-20': '#dc3545',
-    '21-40': '#F5B731',
-    '41-60': '#007bff',
-    '61-80': '#28a745',
-    '81-100': '#1B2B4B',
+    '0-20': '#dc3545', '21-40': '#F5B731', '41-60': '#007bff', '61-80': '#28a745', '81-100': '#1B2B4B',
   }
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      {/* Header */}
       <header className="bg-[#1B2B4B]">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div>
             <h1 className="text-lg font-bold text-white">Examination Insights</h1>
-            <p className="text-xs text-[#94A3B8]">Detailed analytics & performance</p>
+            <p className="text-xs text-[#94A3B8]">Detailed analytics for your candidates</p>
           </div>
-          <div className="flex items-center gap-2">
-            <Link href="/admin" className="text-sm text-[#94A3B8] hover:text-white transition-colors">← Dashboard</Link>
-            <div className="relative">
-              <button onClick={() => setExportOpen(!exportOpen)} disabled={exporting} className="bg-[#F5B731] text-[#1B2B4B] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#F5B731]/90 disabled:opacity-50 transition-all">
-                {exporting ? 'Exporting...' : <span className="inline-flex items-center gap-1.5"><LuDownload className="w-4 h-4" /> Export</span>}
-              </button>
-              {exportOpen && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setExportOpen(false)} />
-                  <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-[0_25px_50px_rgba(0,0,0,0.15)] border border-[#E2E8F0] py-1 z-20 min-w-[140px]">
-                    <button onClick={() => { handleExport('csv'); setExportOpen(false) }} className="w-full text-left px-4 py-2 text-sm text-[#1B2B4B] hover:bg-[#F8FAFC]">CSV</button>
-                    <button onClick={() => { handleExport('excel'); setExportOpen(false) }} className="w-full text-left px-4 py-2 text-sm text-[#1B2B4B] hover:bg-[#F8FAFC]">Excel (.xlsx)</button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
+          <Link href="/manager" className="text-sm text-[#94A3B8] hover:text-white transition-colors">← Dashboard</Link>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-        {/* ── Performance Metrics ── */}
+        {/* Performance Metrics */}
         <div>
           <h2 className="text-sm font-bold text-[#1B2B4B] mb-3 flex items-center gap-2">
             <LuBarChart3 className="w-4 h-4 text-[#F5B731]" /> Performance Metrics
@@ -178,7 +97,7 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* ── Top/Bottom Candidates Row ── */}
+        {/* Top/Bottom Candidates */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Fastest */}
           <div className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-[0_1px_3px_rgba(0,0,0,0.05)] p-5">
@@ -207,7 +126,7 @@ export default function AnalyticsPage() {
             )}
           </div>
 
-          {/* Highest Scoring */}
+          {/* Highest */}
           <div className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-[0_1px_3px_rgba(0,0,0,0.05)] p-5">
             <h3 className="text-sm font-bold text-[#1B2B4B] mb-3 flex items-center gap-2">
               <LuTrendingUp className="w-4 h-4 text-[#28a745]" /> Highest Scoring
@@ -220,13 +139,13 @@ export default function AnalyticsPage() {
                   <div key={i} className="flex items-center justify-between py-2 border-b border-[#E2E8F0]/50 last:border-0">
                     <div className="flex items-center gap-2">
                       <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                        i === 0 ? 'bg-[#28a745]/20 text-[#28a745]' : i === 1 ? 'bg-[#94A3B8]/20 text-[#94A3B8]' : i === 2 ? 'bg-[#CD7F32]/20 text-[#CD7F32]' : 'bg-[#E2E8F0] text-[#94A3B8]'
+                        i === 0 ? 'bg-[#28a745]/20 text-[#28a745]' : 'bg-[#E2E8F0] text-[#94A3B8]'
                       }`}>{i + 1}</span>
                       <span className="text-sm font-medium text-[#1B2B4B] truncate max-w-[120px]">{c.name}</span>
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-[#94A3B8]">
+                    <div className="flex items-center gap-3 text-xs">
                       <span className="font-semibold text-[#28a745]">{c.percentage}%</span>
-                      <span className="bg-[#E2E8F0] px-2 py-0.5 rounded-full">{c.state}</span>
+                      <span className="bg-[#E2E8F0] text-[#94A3B8] px-2 py-0.5 rounded-full">{c.state}</span>
                     </div>
                   </div>
                 ))}
@@ -234,7 +153,7 @@ export default function AnalyticsPage() {
             )}
           </div>
 
-          {/* Lowest Scoring */}
+          {/* Lowest */}
           <div className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-[0_1px_3px_rgba(0,0,0,0.05)] p-5">
             <h3 className="text-sm font-bold text-[#1B2B4B] mb-3 flex items-center gap-2">
               <LuTrendingDown className="w-4 h-4 text-[#dc3545]" /> Lowest Scoring
@@ -249,9 +168,9 @@ export default function AnalyticsPage() {
                       <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-[#E2E8F0] text-[#94A3B8]">{i + 1}</span>
                       <span className="text-sm font-medium text-[#1B2B4B] truncate max-w-[120px]">{c.name}</span>
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-[#94A3B8]">
+                    <div className="flex items-center gap-3 text-xs">
                       <span className="font-semibold text-[#dc3545]">{c.percentage}%</span>
-                      <span className="bg-[#E2E8F0] px-2 py-0.5 rounded-full">{c.state}</span>
+                      <span className="bg-[#E2E8F0] text-[#94A3B8] px-2 py-0.5 rounded-full">{c.state}</span>
                     </div>
                   </div>
                 ))}
@@ -260,7 +179,7 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* ── Score Distribution ── */}
+        {/* Score Distribution */}
         <div className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-[0_1px_3px_rgba(0,0,0,0.05)] p-5">
           <h3 className="text-sm font-bold text-[#1B2B4B] mb-4 flex items-center gap-2">
             <LuBarChart3 className="w-4 h-4 text-[#007bff]" /> Score Distribution
@@ -279,7 +198,7 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* ── Submission Trends ── */}
+        {/* Submission Trends */}
         <div className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-[0_1px_3px_rgba(0,0,0,0.05)] p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-[#1B2B4B] flex items-center gap-2">
@@ -304,11 +223,7 @@ export default function AnalyticsPage() {
               const count = item.count || 0
               const height = maxTrend > 0 ? (count / maxTrend) * 100 : 0
               const label = item.date || item.week || item.month || ''
-              const shortLabel = trendView === 'daily'
-                ? label.slice(5)
-                : trendView === 'monthly'
-                ? new Date(label + '-01').toLocaleString('en', { month: 'short' })
-                : label
+              const shortLabel = trendView === 'daily' ? label.slice(5) : trendView === 'monthly' ? new Date(label + '-01').toLocaleString('en', { month: 'short' }) : label
 
               return (
                 <div key={i} className="flex flex-col items-center gap-1 min-w-[24px] flex-1 group">
@@ -325,61 +240,6 @@ export default function AnalyticsPage() {
               )
             })}
           </div>
-        </div>
-
-        {/* ── Agent List (existing) ── */}
-        <div>
-          <h2 className="text-sm font-bold text-[#1B2B4B] mb-3 flex items-center gap-2">
-            <LuUsers className="w-4 h-4 text-[#1B2B4B]" /> All Candidates
-          </h2>
-          <div className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-[0_1px_3px_rgba(0,0,0,0.05)] p-4 mb-4 flex flex-wrap gap-3">
-            <input type="text" value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} placeholder="Search by name, email, phone..." className={inputClass + " flex-1 min-w-[200px]"} />
-            <input type="text" value={stateFilter} onChange={e => { setStateFilter(e.target.value); setPage(1) }} placeholder="Filter by state..." className={inputClass + " w-40"} />
-          </div>
-          <div className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-[0_1px_3px_rgba(0,0,0,0.05)] overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="text-left text-[11px] font-semibold tracking-wider text-[#94A3B8] uppercase border-b border-[#E2E8F0] bg-[#F8FAFC]">
-                    <th className="px-4 py-3">Name</th>
-                    <th className="px-4 py-3">Email</th>
-                    <th className="px-4 py-3">Phone</th>
-                    <th className="px-4 py-3">State</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Score</th>
-                    <th className="px-4 py-3">Registered</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {agents.map(agent => {
-                    const status = getStatus(agent)
-                    const latest = agent.quizAttempts?.[0]
-                    return (
-                      <tr key={agent.id} className="border-b border-[#E2E8F0]/50 last:border-0 hover:bg-[#F8FAFC] transition-colors">
-                        <td className="px-4 py-3 text-sm font-medium text-[#1B2B4B]">{agent.fullName}</td>
-                        <td className="px-4 py-3 text-sm text-[#94A3B8]">{agent.email}</td>
-                        <td className="px-4 py-3 text-sm text-[#94A3B8]">{agent.phone}</td>
-                        <td className="px-4 py-3 text-sm text-[#94A3B8]">{agent.state || '—'}</td>
-                        <td className="px-4 py-3"><span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[status]}`}>{status.replace(/_/g, ' ')}</span></td>
-                        <td className="px-4 py-3 text-sm text-[#94A3B8]">{latest?.percentageScore != null ? `${latest.percentageScore}%` : '—'}</td>
-                        <td className="px-4 py-3 text-sm text-[#94A3B8]">{new Date(agent.createdAt).toLocaleDateString()}</td>
-                      </tr>
-                    )
-                  })}
-                  {agents.length === 0 && (
-                    <tr><td colSpan={7} className="px-4 py-8 text-center text-sm text-[#94A3B8]">No agents found</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-          {total > 20 && (
-            <div className="flex items-center justify-center gap-2 mt-4">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-3 py-1.5 rounded-lg text-sm bg-white border border-[#E2E8F0] text-[#1B2B4B] disabled:opacity-30">← Prev</button>
-              <span className="text-sm text-[#94A3B8]">Page {page} of {Math.ceil(total / 20)}</span>
-              <button onClick={() => setPage(p => p + 1)} disabled={page >= Math.ceil(total / 20)} className="px-3 py-1.5 rounded-lg text-sm bg-white border border-[#E2E8F0] text-[#1B2B4B] disabled:opacity-30">Next →</button>
-            </div>
-          )}
         </div>
       </main>
     </div>

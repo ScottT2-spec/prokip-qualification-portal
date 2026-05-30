@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import {
   LuUsers, LuFileText, LuCircleCheck, LuCircleX, LuClock,
   LuGraduationCap, LuDownload, LuLink, LuCopy, LuPlus,
@@ -227,7 +228,10 @@ export default function ManagerDashboard() {
               <p className="text-xs text-[#94A3B8]">Welcome, {user?.fullName}</p>
             </div>
           </div>
-          <button onClick={handleLogout} className="text-sm text-[#94A3B8] hover:text-white transition-colors">Sign Out</button>
+          <div className="flex items-center gap-3">
+            <Link href="/manager/insights" className="text-sm text-[#F5B731] hover:text-white transition-colors font-semibold">📊 Insights</Link>
+            <button onClick={handleLogout} className="text-sm text-[#94A3B8] hover:text-white transition-colors">Sign Out</button>
+          </div>
         </div>
       </header>
 
