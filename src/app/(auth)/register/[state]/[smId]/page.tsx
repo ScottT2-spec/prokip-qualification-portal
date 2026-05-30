@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { LuGraduationCap, LuMapPin } from 'react-icons/lu'
+import { LuGraduationCap, LuMapPin, LuMessageCircle } from 'react-icons/lu'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -93,12 +93,18 @@ export default function RegisterPage() {
               <input type="text" name="fullName" value={form.fullName} onChange={handleChange} required className={inputClass} placeholder="John Doe" />
             </div>
             <div>
-              <label className={labelClass}>Email Address</label>
-              <input type="email" name="email" value={form.email} onChange={handleChange} required className={inputClass} placeholder="you@example.com" />
+              <label className={labelClass}>WhatsApp Number</label>
+              <input type="tel" name="phone" value={form.phone} onChange={handleChange} required className={inputClass} placeholder="+234 800 000 0000" />
+              <div className="mt-2 flex items-start gap-2 bg-[#25D366]/8 border border-[#25D366]/20 rounded-lg p-2.5">
+                <LuMessageCircle className="w-4 h-4 text-[#25D366] flex-shrink-0 mt-0.5" />
+                <p className="text-[11px] leading-relaxed text-[#1B2B4B]/70">
+                  Please use the same WhatsApp number you used to join your Prokip Orientation Group. This number will be used for verification and future communication.
+                </p>
+              </div>
             </div>
             <div>
-              <label className={labelClass}>Phone Number</label>
-              <input type="tel" name="phone" value={form.phone} onChange={handleChange} required className={inputClass} placeholder="+234 800 000 0000" />
+              <label className={labelClass}>Email Address</label>
+              <input type="email" name="email" value={form.email} onChange={handleChange} required className={inputClass} placeholder="you@example.com" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
