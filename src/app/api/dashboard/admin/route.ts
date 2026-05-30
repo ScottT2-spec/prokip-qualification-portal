@@ -1,10 +1,16 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
+import { queryCache } from '@/lib/cache'
 
 export async function GET() {
   try {
     await requireAuth(['ADMIN'])
+
+    // Cache dashboard metrics for 30s — avoids hammering DB on rapid refreshes
+    const cacheKey = 'admin_dashboard_metrics'
+    const cached = queryCache.get<Record<string, unknown>>(cacheKey)
+    if (cached) return NextResponse.json(cached)
 
     const [
       totalCandidates,
@@ -49,7 +55,6 @@ export async function GET() {
         where: { role: 'AGENT' },
         _count: true,
       }),
-      // Suspicious: agents with multiple attempts or deactivated accounts
       prisma.user.count({
         where: {
           role: 'AGENT',
@@ -68,7 +73,6 @@ export async function GET() {
     const passRate = totalSubmissions > 0 ? (passedCount / totalSubmissions) * 100 : 0
     const failureRate = totalSubmissions > 0 ? (failedCount / totalSubmissions) * 100 : 0
 
-    // Average completion time in minutes
     const completionTimes = submittedAttempts
       .filter(a => a.startedAt && a.submittedAt)
       .map(a => (new Date(a.submittedAt!).getTime() - new Date(a.startedAt!).getTime()) / 60000)
@@ -76,7 +80,7 @@ export async function GET() {
       ? completionTimes.reduce((a, b) => a + b, 0) / completionTimes.length
       : 0
 
-    return NextResponse.json({
+    const response = {
       metrics: {
         totalCandidates,
         totalStates,
@@ -94,7 +98,10 @@ export async function GET() {
       },
       recentRegistrations,
       statePerformance,
-    })
+    }
+
+    queryCache.set(cacheKey, response, 30_000)
+    return NextResponse.json(response)
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Server error'
     const status = message === 'Unauthorized' ? 401 : message === 'Forbidden' ? 403 : 500

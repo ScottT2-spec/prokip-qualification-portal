@@ -1,37 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
+import { parsePaginationParams, paginatedResponse } from '@/lib/pagination'
 
 // GET all questions (Admin only)
 export async function GET(req: NextRequest) {
   try {
     await requireAuth(['ADMIN'])
-    const { searchParams } = new URL(req.url)
-    const category = searchParams.get('category')
-    const difficulty = searchParams.get('difficulty')
-    const type = searchParams.get('type')
-    const search = searchParams.get('search')
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '50')
+    const params = parsePaginationParams(req, { limit: 50 })
 
     const where: Record<string, unknown> = {}
-    if (category) where.category = category
-    if (difficulty) where.difficulty = difficulty
-    if (type) where.type = type
-    if (search) where.text = { contains: search, mode: 'insensitive' }
+    if (params.filters.category) where.category = params.filters.category
+    if (params.filters.difficulty) where.difficulty = params.filters.difficulty
+    if (params.filters.type) where.type = params.filters.type
+    if (params.search) where.text = { contains: params.search, mode: 'insensitive' }
+
+    const sortField = ['createdAt', 'category', 'difficulty', 'type'].includes(params.sortBy)
+      ? params.sortBy : 'createdAt'
 
     const [questions, total] = await Promise.all([
       prisma.question.findMany({
         where,
         include: { options: { orderBy: { order: 'asc' } } },
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
+        orderBy: { [sortField]: params.sortOrder },
+        skip: params.skip,
+        take: params.limit,
       }),
       prisma.question.count({ where }),
     ])
 
-    return NextResponse.json({ questions, total, page, limit })
+    return NextResponse.json(paginatedResponse(questions, total, params))
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Server error'
     const status = message === 'Unauthorized' ? 401 : message === 'Forbidden' ? 403 : 500
