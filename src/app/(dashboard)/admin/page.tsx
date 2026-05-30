@@ -3,11 +3,13 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LuUsers, LuFileText, LuCircleCheck, LuCircleX, LuChartBar, LuTrophy, LuTrendingDown, LuAward, LuGraduationCap, LuChevronDown, LuChevronUp } from 'react-icons/lu'
+import { LuUsers, LuFileText, LuCircleCheck, LuCircleX, LuChartBar, LuTrophy, LuTrendingDown, LuAward, LuGraduationCap, LuChevronDown, LuChevronUp, LuMap, LuUserCog, LuClock, LuShieldAlert, LuArrowDown } from 'react-icons/lu'
 
 interface Metrics {
-  totalRegistrations: number; totalAttempts: number; passRate: number; failureRate: number
-  averageScore: number; highestScore: number; lowestScore: number; passedCount: number; failedCount: number
+  totalCandidates: number; totalStates: number; totalStateManagers: number; totalSubmissions: number
+  passedCount: number; failedCount: number; passRate: number; failureRate: number
+  averageScore: number; highestScore: number; lowestScore: number
+  avgCompletionTime: number; suspiciousAccounts: number
 }
 
 export default function AdminDashboard() {
@@ -35,14 +37,18 @@ export default function AdminDashboard() {
   if (loading) return <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center"><div className="w-12 h-12 border-4 border-[#E2E8F0] border-t-[#1B2B4B] rounded-full animate-spin" /></div>
 
   const cards = metrics ? [
-    { label: 'Total Registrations', value: metrics.totalRegistrations, icon: <LuUsers className="w-5 h-5 text-[#1B2B4B]" /> },
-    { label: 'Total Attempts', value: metrics.totalAttempts, icon: <LuFileText className="w-5 h-5 text-[#1B2B4B]" /> },
-    { label: 'Pass Rate', value: `${metrics.passRate}%`, icon: <LuCircleCheck className="w-5 h-5 text-[#28a745]" /> },
-    { label: 'Failure Rate', value: `${metrics.failureRate}%`, icon: <LuCircleX className="w-5 h-5 text-[#dc3545]" /> },
+    { label: 'Total Candidates', value: metrics.totalCandidates, icon: <LuUsers className="w-5 h-5 text-[#1B2B4B]" /> },
+    { label: 'Total States', value: metrics.totalStates, icon: <LuMap className="w-5 h-5 text-[#1B2B4B]" /> },
+    { label: 'State Managers', value: metrics.totalStateManagers, icon: <LuUserCog className="w-5 h-5 text-[#1B2B4B]" /> },
+    { label: 'Total Submissions', value: metrics.totalSubmissions, icon: <LuFileText className="w-5 h-5 text-[#1B2B4B]" /> },
+    { label: 'Total Passed', value: metrics.passedCount, icon: <LuCircleCheck className="w-5 h-5 text-[#28a745]" /> },
+    { label: 'Total Failed', value: metrics.failedCount, icon: <LuCircleX className="w-5 h-5 text-[#dc3545]" /> },
+    { label: 'Pass Rate', value: `${metrics.passRate}%`, icon: <LuAward className="w-5 h-5 text-[#28a745]" /> },
     { label: 'Average Score', value: `${metrics.averageScore}%`, icon: <LuChartBar className="w-5 h-5 text-[#1B2B4B]" /> },
+    { label: 'Avg Completion Time', value: `${metrics.avgCompletionTime} min`, icon: <LuClock className="w-5 h-5 text-[#1B2B4B]" /> },
+    { label: 'Suspicious Accounts', value: metrics.suspiciousAccounts, icon: <LuShieldAlert className="w-5 h-5 text-[#dc3545]" /> },
     { label: 'Highest Score', value: `${metrics.highestScore}%`, icon: <LuTrophy className="w-5 h-5 text-[#F5B731]" /> },
-    { label: 'Lowest Score', value: `${metrics.lowestScore}%`, icon: <LuTrendingDown className="w-5 h-5 text-[#94A3B8]" /> },
-    { label: 'Passed', value: metrics.passedCount, icon: <LuAward className="w-5 h-5 text-[#28a745]" /> },
+    { label: 'Lowest Score', value: `${metrics.lowestScore}%`, icon: <LuArrowDown className="w-5 h-5 text-[#94A3B8]" /> },
   ] : []
 
   return (
@@ -79,7 +85,7 @@ export default function AdminDashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
           {cards.map((card, i) => (
             <div key={i} className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-[0_1px_3px_rgba(0,0,0,0.05)] p-4">
               <div className="flex items-center justify-between mb-2">
