@@ -5,7 +5,7 @@ const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'prokip-qualification-secret-key-change-in-production'
 )
 
-const publicPaths = ['/login', '/register', '/api/auth/login', '/api/register', '/api/health']
+const publicPaths = ['/login', '/register', '/api/auth/login', '/api/register', '/api/health', '/manager/register', '/api/sm-invites/']
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
