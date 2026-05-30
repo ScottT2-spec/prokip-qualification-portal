@@ -37,6 +37,31 @@ export default function ExamInterface({ attemptId, quiz, existingAnswers, starte
   const totalQuestions = quiz.questions.length
   const currentQuestion = quiz.questions[currentIndex]
 
+  const saveAnswer = useCallback(async (questionId: string, answer: Answer) => {
+    try {
+      await fetch(`/api/attempts/${attemptId}/answer`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questionId, selectedOptions: answer.selectedOptions, textAnswer: answer.textAnswer }),
+      })
+    } catch (err) { console.error('Failed to save answer:', err) }
+  }, [attemptId])
+
+  const handleSubmit = useCallback(async () => {
+    if (submittingRef.current) return
+    submittingRef.current = true
+    setIsSubmitting(true)
+    try {
+      const res = await fetch(`/api/attempts/${attemptId}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+      const data = await res.json()
+      setSubmitted(true)
+      setResult(data.result)
+    } catch (err) {
+      console.error('Submit failed:', err)
+      submittingRef.current = false
+      setIsSubmitting(false)
+    }
+  }, [attemptId])
+
   useEffect(() => {
     const answerMap = new Map<string, Answer>()
     existingAnswers.forEach(a => answerMap.set(a.questionId, a))
@@ -67,15 +92,6 @@ export default function ExamInterface({ attemptId, quiz, existingAnswers, starte
     return () => window.removeEventListener('beforeunload', handler)
   }, [submitted])
 
-  const saveAnswer = useCallback(async (questionId: string, answer: Answer) => {
-    try {
-      await fetch(`/api/attempts/${attemptId}/answer`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ questionId, selectedOptions: answer.selectedOptions, textAnswer: answer.textAnswer }),
-      })
-    } catch (err) { console.error('Failed to save answer:', err) }
-  }, [attemptId])
-
   const handleAnswer = useCallback((questionId: string, selectedOptions: string[], textAnswer?: string) => {
     const answer: Answer = { questionId, selectedOptions, textAnswer }
     setAnswers(prev => { const next = new Map(prev); next.set(questionId, answer); return next })
@@ -85,22 +101,6 @@ export default function ExamInterface({ attemptId, quiz, existingAnswers, starte
 
   const handleNext = () => { if (currentIndex < totalQuestions - 1) setCurrentIndex(prev => prev + 1) }
   const handlePrevious = () => { if (quiz.allowBackNavigation && currentIndex > 0) setCurrentIndex(prev => prev - 1) }
-
-  const handleSubmit = useCallback(async () => {
-    if (submittingRef.current) return
-    submittingRef.current = true
-    setIsSubmitting(true)
-    try {
-      const res = await fetch(`/api/attempts/${attemptId}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
-      const data = await res.json()
-      setSubmitted(true)
-      setResult(data.result)
-    } catch (err) {
-      console.error('Submit failed:', err)
-      submittingRef.current = false
-      setIsSubmitting(false)
-    }
-  }, [attemptId])
 
   const answeredCount = answers.size
   const progress = totalQuestions > 0 ? Math.round((answeredCount / totalQuestions) * 100) : 0
