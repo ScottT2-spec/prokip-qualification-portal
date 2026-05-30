@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { LuClock, LuFileText, LuUsers, LuTarget } from 'react-icons/lu'
 
 interface Quiz { id: string; title: string; description: string; status: string; duration: number; passMark: number; maxAttempts: number; createdAt: string; _count: { questions: number; attempts: number } }
 
@@ -78,7 +79,7 @@ export default function QuizzesPage() {
                   </div>
                   <p className="text-sm text-[#94A3B8]">{quiz.description}</p>
                   <div className="flex gap-3 mt-2 text-xs text-[#94A3B8]">
-                    <span>⏱ {quiz.duration}min</span><span>📝 {quiz._count.questions} questions</span><span>👥 {quiz._count.attempts} attempts</span><span>🎯 Pass: {quiz.passMark}%</span>
+                    <span className="inline-flex items-center gap-1"><LuClock className="w-3.5 h-3.5" /> {quiz.duration}min</span><span className="inline-flex items-center gap-1"><LuFileText className="w-3.5 h-3.5" /> {quiz._count.questions} questions</span><span className="inline-flex items-center gap-1"><LuUsers className="w-3.5 h-3.5" /> {quiz._count.attempts} attempts</span><span className="inline-flex items-center gap-1"><LuTarget className="w-3.5 h-3.5" /> Pass: {quiz.passMark}%</span>
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -89,7 +90,7 @@ export default function QuizzesPage() {
               </div>
             </div>
           ))}
-          {!loading && quizzes.length === 0 && <div className="text-center py-12 text-[#94A3B8]"><p className="text-4xl mb-2">📝</p><p>No quizzes yet. Create your first one!</p></div>}
+          {!loading && quizzes.length === 0 && <div className="text-center py-12 text-[#94A3B8]"><p className="flex justify-center mb-2"><LuFileText className="w-10 h-10" /></p><p>No quizzes yet. Create your first one!</p></div>}
         </div>
       </main>
     </div>

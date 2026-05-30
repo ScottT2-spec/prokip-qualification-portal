@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { LuUsers, LuFileText, LuCheckCircle, LuXCircle, LuBarChart3, LuTrophy, LuTrendingDown, LuAward, LuGraduationCap } from 'react-icons/lu'
 
 interface Metrics {
   totalRegistrations: number; totalAttempts: number; passRate: number; failureRate: number
@@ -33,14 +34,14 @@ export default function AdminDashboard() {
   if (loading) return <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center"><div className="w-12 h-12 border-4 border-[#E2E8F0] border-t-[#1B2B4B] rounded-full animate-spin" /></div>
 
   const cards = metrics ? [
-    { label: 'Total Registrations', value: metrics.totalRegistrations, icon: '👥' },
-    { label: 'Total Attempts', value: metrics.totalAttempts, icon: '📝' },
-    { label: 'Pass Rate', value: `${metrics.passRate}%`, icon: '✅' },
-    { label: 'Failure Rate', value: `${metrics.failureRate}%`, icon: '❌' },
-    { label: 'Average Score', value: `${metrics.averageScore}%`, icon: '📊' },
-    { label: 'Highest Score', value: `${metrics.highestScore}%`, icon: '🏆' },
-    { label: 'Lowest Score', value: `${metrics.lowestScore}%`, icon: '📉' },
-    { label: 'Passed', value: metrics.passedCount, icon: '🎉' },
+    { label: 'Total Registrations', value: metrics.totalRegistrations, icon: <LuUsers className="w-5 h-5 text-[#1B2B4B]" /> },
+    { label: 'Total Attempts', value: metrics.totalAttempts, icon: <LuFileText className="w-5 h-5 text-[#1B2B4B]" /> },
+    { label: 'Pass Rate', value: `${metrics.passRate}%`, icon: <LuCheckCircle className="w-5 h-5 text-[#28a745]" /> },
+    { label: 'Failure Rate', value: `${metrics.failureRate}%`, icon: <LuXCircle className="w-5 h-5 text-[#dc3545]" /> },
+    { label: 'Average Score', value: `${metrics.averageScore}%`, icon: <LuBarChart3 className="w-5 h-5 text-[#1B2B4B]" /> },
+    { label: 'Highest Score', value: `${metrics.highestScore}%`, icon: <LuTrophy className="w-5 h-5 text-[#F5B731]" /> },
+    { label: 'Lowest Score', value: `${metrics.lowestScore}%`, icon: <LuTrendingDown className="w-5 h-5 text-[#94A3B8]" /> },
+    { label: 'Passed', value: metrics.passedCount, icon: <LuAward className="w-5 h-5 text-[#28a745]" /> },
   ] : []
 
   return (
@@ -48,7 +49,7 @@ export default function AdminDashboard() {
       <header className="bg-[#1B2B4B]">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">🎓</span>
+            <LuGraduationCap className="w-7 h-7 text-[#F5B731]" />
             <div>
               <h1 className="text-lg font-bold text-white">Admin Dashboard</h1>
               <p className="text-xs text-[#94A3B8]">Prokip Qualification Portal</p>
@@ -81,7 +82,7 @@ export default function AdminDashboard() {
           {cards.map((card, i) => (
             <div key={i} className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-[0_1px_3px_rgba(0,0,0,0.05)] p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-lg">{card.icon}</span>
+                {card.icon}
               </div>
               <p className="text-2xl font-bold text-[#1B2B4B]">{card.value}</p>
               <p className="text-[11px] font-semibold tracking-wider text-[#94A3B8] uppercase mt-1">{card.label}</p>

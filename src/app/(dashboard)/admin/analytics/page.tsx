@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { LuDownload } from 'react-icons/lu'
 
 export default function AnalyticsPage() {
   const [agents, setAgents] = useState<any[]>([])
@@ -44,7 +45,7 @@ export default function AnalyticsPage() {
           <div className="flex items-center gap-2">
             <Link href="/admin" className="text-sm text-[#94A3B8] hover:text-white transition-colors">← Dashboard</Link>
             <div className="relative group">
-              <button disabled={exporting} className="bg-[#F5B731] text-[#1B2B4B] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#F5B731]/90 disabled:opacity-50 transition-all">{exporting ? 'Exporting...' : '📥 Export'}</button>
+              <button disabled={exporting} className="bg-[#F5B731] text-[#1B2B4B] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#F5B731]/90 disabled:opacity-50 transition-all">{exporting ? 'Exporting...' : <span className="inline-flex items-center gap-1.5"><LuDownload className="w-4 h-4" /> Export</span>}</button>
               <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-[0_25px_50px_rgba(0,0,0,0.15)] border border-[#E2E8F0] py-1 hidden group-hover:block z-10 min-w-[140px]">
                 <button onClick={() => handleExport('csv')} className="w-full text-left px-4 py-2 text-sm text-[#1B2B4B] hover:bg-[#F8FAFC]">CSV</button>
                 <button onClick={() => handleExport('excel')} className="w-full text-left px-4 py-2 text-sm text-[#1B2B4B] hover:bg-[#F8FAFC]">Excel (.xlsx)</button>

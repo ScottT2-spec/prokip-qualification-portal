@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { LuUsers } from 'react-icons/lu'
 
 export default function StateManagersPage() {
   const [managers, setManagers] = useState<any[]>([])
@@ -82,7 +83,7 @@ export default function StateManagersPage() {
               </div>
             </div>
           ))}
-          {!loading && managers.length === 0 && <div className="text-center py-12 text-[#94A3B8]"><p className="text-4xl mb-2">👥</p><p>No state managers yet</p></div>}
+          {!loading && managers.length === 0 && <div className="text-center py-12 text-[#94A3B8]"><p className="flex justify-center mb-2"><LuUsers className="w-10 h-10" /></p><p>No state managers yet</p></div>}
         </div>
       </main>
     </div>

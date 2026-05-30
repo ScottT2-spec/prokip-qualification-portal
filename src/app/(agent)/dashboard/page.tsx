@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { LuGraduationCap, LuFileText, LuCheckCircle, LuXCircle, LuClock, LuRefreshCw } from 'react-icons/lu'
 
 interface Quiz {
   id: string; title: string; description: string; duration: number; status: string
@@ -52,7 +53,7 @@ export default function AgentDashboard() {
       <header className="bg-[#1B2B4B]">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-bold text-white">🎓 Prokip Qualification</h1>
+            <h1 className="text-lg font-bold text-white flex items-center gap-2"><LuGraduationCap className="w-5 h-5 text-[#F5B731]" /> Prokip Qualification</h1>
             <p className="text-sm text-[#94A3B8]">Welcome, {user?.fullName}</p>
           </div>
           <button onClick={handleLogout} className="text-sm text-[#94A3B8] hover:text-white transition-colors">Sign Out</button>
@@ -63,7 +64,7 @@ export default function AgentDashboard() {
         <h2 className="text-xl font-bold text-[#1B2B4B] mb-6">Available Examinations</h2>
         {quizzes.length === 0 ? (
           <div className="bg-white rounded-[16px] shadow-[0_1px_3px_rgba(0,0,0,0.05)] border border-[#E2E8F0] p-8 text-center">
-            <span className="text-4xl mb-4 block">📝</span>
+            <span className="flex justify-center mb-4"><LuFileText className="w-10 h-10 text-[#94A3B8]" /></span>
             <p className="text-[#94A3B8]">No examinations available at the moment.</p>
           </div>
         ) : (
@@ -79,16 +80,16 @@ export default function AgentDashboard() {
                       <h3 className="text-lg font-semibold text-[#1B2B4B]">{quiz.title}</h3>
                       {quiz.description && <p className="text-sm text-[#94A3B8] mt-1">{quiz.description}</p>}
                       <div className="flex flex-wrap items-center gap-3 mt-3">
-                        <span className="inline-flex items-center gap-1 text-xs text-[#94A3B8] bg-[#F8FAFC] border border-[#E2E8F0] px-2.5 py-1 rounded-lg">⏱ {quiz.duration} minutes</span>
-                        <span className="inline-flex items-center gap-1 text-xs text-[#94A3B8] bg-[#F8FAFC] border border-[#E2E8F0] px-2.5 py-1 rounded-lg">📝 {quiz._count.questions} questions</span>
+                        <span className="inline-flex items-center gap-1 text-xs text-[#94A3B8] bg-[#F8FAFC] border border-[#E2E8F0] px-2.5 py-1 rounded-lg"><LuClock className="w-3.5 h-3.5" /> {quiz.duration} minutes</span>
+                        <span className="inline-flex items-center gap-1 text-xs text-[#94A3B8] bg-[#F8FAFC] border border-[#E2E8F0] px-2.5 py-1 rounded-lg"><LuFileText className="w-3.5 h-3.5" /> {quiz._count.questions} questions</span>
                         {isSubmitted && (
                           <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg font-semibold ${
                             lastAttempt.passed ? 'bg-[#28a745]/10 text-[#28a745]' : 'bg-[#dc3545]/10 text-[#dc3545]'
                           }`}>
-                            {lastAttempt.passed ? '✅ Passed' : '❌ Failed'}{lastAttempt.percentageScore !== null && ` (${lastAttempt.percentageScore}%)`}
+                            <span className="inline-flex items-center gap-1">{lastAttempt.passed ? <><LuCheckCircle className="w-3.5 h-3.5" /> Passed</> : <><LuXCircle className="w-3.5 h-3.5" /> Failed</>}{lastAttempt.percentageScore !== null && ` (${lastAttempt.percentageScore}%)`}</span>
                           </span>
                         )}
-                        {isInProgress && <span className="inline-flex items-center gap-1 text-xs bg-[#FEF3C7] text-[#F5B731] px-2.5 py-1 rounded-lg font-semibold">🔄 In Progress</span>}
+                        {isInProgress && <span className="inline-flex items-center gap-1 text-xs bg-[#FEF3C7] text-[#F5B731] px-2.5 py-1 rounded-lg font-semibold"><LuRefreshCw className="w-3.5 h-3.5" /> In Progress</span>}
                       </div>
                     </div>
                     <div className="ml-4">

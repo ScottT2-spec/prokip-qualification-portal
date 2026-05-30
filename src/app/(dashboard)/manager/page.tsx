@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { LuUsers, LuFileText, LuCheckCircle, LuXCircle, LuClock, LuGraduationCap, LuDownload } from 'react-icons/lu'
 
 export default function ManagerDashboard() {
   const router = useRouter()
@@ -43,21 +44,21 @@ export default function ManagerDashboard() {
     <div className="min-h-screen bg-[#F8FAFC]">
       <header className="bg-[#1B2B4B]">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div><h1 className="text-lg font-bold text-white">🎓 State Manager Dashboard</h1><p className="text-xs text-[#94A3B8]">Welcome, {user?.fullName}</p></div>
+          <div className="flex items-center gap-3"><LuGraduationCap className="w-6 h-6 text-[#F5B731]" /><div><h1 className="text-lg font-bold text-white">State Manager Dashboard</h1><p className="text-xs text-[#94A3B8]">Welcome, {user?.fullName}</p></div></div>
           <button onClick={handleLogout} className="text-sm text-[#94A3B8] hover:text-white transition-colors">Sign Out</button>
         </div>
       </header>
       <main className="max-w-7xl mx-auto px-4 py-6">
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
           {[
-            { label: 'Registered', value: metrics.totalRegistered, icon: '👥' },
-            { label: 'Submitted', value: metrics.submitted, icon: '📝' },
-            { label: 'Passed', value: metrics.passed, icon: '✅' },
-            { label: 'Failed', value: metrics.failed, icon: '❌' },
-            { label: 'Not Started', value: metrics.notStarted, icon: '⏳' },
+            { label: 'Registered', value: metrics.totalRegistered, icon: <LuUsers className="w-5 h-5 text-[#1B2B4B]" /> },
+            { label: 'Submitted', value: metrics.submitted, icon: <LuFileText className="w-5 h-5 text-[#1B2B4B]" /> },
+            { label: 'Passed', value: metrics.passed, icon: <LuCheckCircle className="w-5 h-5 text-[#28a745]" /> },
+            { label: 'Failed', value: metrics.failed, icon: <LuXCircle className="w-5 h-5 text-[#dc3545]" /> },
+            { label: 'Not Started', value: metrics.notStarted, icon: <LuClock className="w-5 h-5 text-[#94A3B8]" /> },
           ].map((m, i) => (
             <div key={i} className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-[0_1px_3px_rgba(0,0,0,0.05)] p-4 text-center">
-              <span className="text-lg">{m.icon}</span>
+              <span className="flex justify-center">{m.icon}</span>
               <p className="text-2xl font-bold text-[#1B2B4B] mt-1">{m.value || 0}</p>
               <p className="text-[11px] font-semibold tracking-wider text-[#94A3B8] uppercase">{m.label}</p>
             </div>
@@ -66,8 +67,8 @@ export default function ManagerDashboard() {
         <div className="flex flex-wrap gap-3 mb-4">
           <input type="text" value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} placeholder="Search agents..."
             className="flex-1 min-w-[200px] bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm text-[#1B2B4B] outline-none focus:border-[#1B2B4B] focus:ring-[3px] focus:ring-[#1B2B4B]/10" />
-          <button onClick={() => handleExport('csv')} disabled={exporting} className="bg-[#F5B731] text-[#1B2B4B] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#F5B731]/90 disabled:opacity-50 transition-all">📥 CSV</button>
-          <button onClick={() => handleExport('excel')} disabled={exporting} className="bg-[#0F1C32] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#1B2B4B] disabled:opacity-50 transition-all">📥 Excel</button>
+          <button onClick={() => handleExport('csv')} disabled={exporting} className="bg-[#F5B731] text-[#1B2B4B] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#F5B731]/90 disabled:opacity-50 transition-all inline-flex items-center gap-1.5"><LuDownload className="w-4 h-4" /> CSV</button>
+          <button onClick={() => handleExport('excel')} disabled={exporting} className="bg-[#0F1C32] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#1B2B4B] disabled:opacity-50 transition-all inline-flex items-center gap-1.5"><LuDownload className="w-4 h-4" /> Excel</button>
         </div>
         <div className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-[0_1px_3px_rgba(0,0,0,0.05)] overflow-hidden">
           <div className="overflow-x-auto">

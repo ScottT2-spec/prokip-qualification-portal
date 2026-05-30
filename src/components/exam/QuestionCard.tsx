@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { LuClipboardList } from 'react-icons/lu'
 
 interface Option { id: string; text: string; order: number }
 interface Question { id: string; text: string; type: string; marks: number; scenarioText?: string; options: Option[] }
@@ -46,7 +47,7 @@ export default function QuestionCard({ question, questionNumber, answer, onAnswe
       {question.scenarioText && (
         <div className="bg-[#FEF3C7] border border-[#F5B731]/30 rounded-[16px] p-4 mb-4">
           <div className="flex items-start gap-2">
-            <span className="text-[#F5B731] text-lg">📋</span>
+            <LuClipboardList className="w-5 h-5 text-[#F5B731] flex-shrink-0" />
             <div>
               <p className="text-xs font-semibold text-[#1B2B4B] uppercase tracking-wider mb-1">Scenario</p>
               <p className="text-sm text-[#1B2B4B]/80 leading-relaxed">{question.scenarioText}</p>

@@ -5,6 +5,7 @@ import { formatTime } from '@/lib/utils'
 import QuestionCard from './QuestionCard'
 import QuestionNavigator from './QuestionNavigator'
 import ReviewScreen from './ReviewScreen'
+import { LuCheckCircle, LuXCircle } from 'react-icons/lu'
 
 interface Option { id: string; text: string; order: number }
 interface Question { id: string; text: string; type: string; marks: number; scenarioText?: string; options: Option[] }
@@ -100,7 +101,7 @@ export default function ExamInterface({ attemptId, quiz, existingAnswers, starte
       <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4">
         <div className="bg-white rounded-[24px] shadow-[0_25px_50px_rgba(0,0,0,0.15)] p-8 max-w-md w-full text-center border border-[#E2E8F0]">
           <div className={`w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center ${result.passed ? 'bg-[#28a745]/10' : 'bg-[#dc3545]/10'}`}>
-            <span className="text-4xl">{result.passed ? '🎉' : '😔'}</span>
+            {result.passed ? <LuCheckCircle className="w-10 h-10 text-[#28a745]" /> : <LuXCircle className="w-10 h-10 text-[#dc3545]" />}
           </div>
           <h2 className="text-2xl font-bold text-[#1B2B4B] mb-2">
             {result.passed ? 'Congratulations!' : 'Better luck next time'}
