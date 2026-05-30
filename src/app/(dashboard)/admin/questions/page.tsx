@@ -91,7 +91,7 @@ export default function QuestionsPage() {
       <header className="bg-[#1B2B4B]">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div><h1 className="text-lg font-bold text-white">Question Bank</h1><p className="text-xs text-[#94A3B8]">{total} questions total</p></div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3"><button onClick={() => { setShowBulk(true); setBulkResult(null); setBulkQuestions([emptyQuestion()]) }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-white/10 text-white border border-white/20 hover:bg-white/20 transition-colors"><LuPlus className="w-4 h-4" /> Add Question</button>
             <button onClick={() => { setShowBulk(true); setBulkResult(null) }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-[#F5B731] text-[#1B2B4B] hover:bg-[#F5B731]/90 transition-colors"><LuUpload className="w-4 h-4" /> Bulk Add</button>
             <Link href="/admin" className="text-sm text-[#94A3B8] hover:text-white transition-colors">← Dashboard</Link>
           </div>
