@@ -76,7 +76,7 @@ export async function GET(req: NextRequest) {
     // Metrics (cached 30s per manager)
     const metricsCacheKey = `sm_metrics_${session.id}`
     const metrics = await queryCache.wrap(metricsCacheKey, async () => {
-      const [allAgents, submitted, passed, failed] = await Promise.all([
+      const [allAgents, submitted, passed, failed, attempts] = await Promise.all([
         prisma.user.count({ where: { role: 'AGENT', state: { in: stateNames } } }),
         prisma.quizAttempt.count({
           where: { status: 'SUBMITTED', user: { state: { in: stateNames } } },
@@ -87,8 +87,14 @@ export async function GET(req: NextRequest) {
         prisma.result.count({
           where: { qualificationStatus: 'FAILED', attempt: { user: { state: { in: stateNames } } } },
         }),
+        prisma.quizAttempt.findMany({
+          where: { status: 'SUBMITTED', startedAt: { not: null }, submittedAt: { not: null }, user: { state: { in: stateNames } } },
+          select: { startedAt: true, submittedAt: true },
+        }),
       ])
-      return { totalRegistered: allAgents, submitted, passed, failed }
+      const times = attempts.filter(a => a.startedAt && a.submittedAt).map(a => (new Date(a.submittedAt!).getTime() - new Date(a.startedAt!).getTime()) / 60000)
+      const avgCompletionTime = times.length > 0 ? Math.round((times.reduce((a, b) => a + b, 0) / times.length) * 10) / 10 : null
+      return { totalRegistered: allAgents, submitted, passed, failed, avgCompletionTime }
     }, 30_000)
 
     const response = paginatedResponse(
