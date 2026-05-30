@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import {
   LuGraduationCap, LuMapPin
 } from 'react-icons/lu'
+import ExamIntegrityNotice from '@/components/ExamIntegrityNotice'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -13,6 +14,7 @@ export default function RegisterPage() {
   const smId = params.smId as string
   const referralCode = `${state}/${smId}`
 
+  const [showNotice, setShowNotice] = useState(true)
   const [form, setForm] = useState({
     fullName: '',
     email: '',
@@ -64,6 +66,14 @@ export default function RegisterPage() {
 
   const inputClass = "w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 py-3 text-[15px] text-[#1B2B4B] outline-none transition-all focus:border-[#1B2B4B] focus:ring-[3px] focus:ring-[#1B2B4B]/10"
   const labelClass = "text-xs font-semibold tracking-wider uppercase text-[#1B2B4B] mb-2 block"
+
+  if (showNotice) {
+    return (
+      <div className="min-h-screen bg-[#0F1C32] flex items-center justify-center p-4">
+        <ExamIntegrityNotice onAccept={() => setShowNotice(false)} buttonLabel="Proceed to Registration" />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-[#0F1C32] flex items-center justify-center p-4">
