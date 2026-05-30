@@ -12,6 +12,7 @@ export default function AnalyticsPage() {
   const [stateFilter, setStateFilter] = useState('')
   const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
+  const [exportOpen, setExportOpen] = useState(false)
 
   const loadAgents = async () => {
     const params = new URLSearchParams({ page: page.toString(), limit: '20' })
@@ -44,12 +45,17 @@ export default function AnalyticsPage() {
           <div><h1 className="text-lg font-bold text-white">Agents & Analytics</h1><p className="text-xs text-[#94A3B8]">{total} agents registered</p></div>
           <div className="flex items-center gap-2">
             <Link href="/admin" className="text-sm text-[#94A3B8] hover:text-white transition-colors">← Dashboard</Link>
-            <div className="relative group">
-              <button disabled={exporting} className="bg-[#F5B731] text-[#1B2B4B] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#F5B731]/90 disabled:opacity-50 transition-all">{exporting ? 'Exporting...' : <span className="inline-flex items-center gap-1.5"><LuDownload className="w-4 h-4" /> Export</span>}</button>
-              <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-[0_25px_50px_rgba(0,0,0,0.15)] border border-[#E2E8F0] py-1 hidden group-hover:block z-10 min-w-[140px]">
-                <button onClick={() => handleExport('csv')} className="w-full text-left px-4 py-2 text-sm text-[#1B2B4B] hover:bg-[#F8FAFC]">CSV</button>
-                <button onClick={() => handleExport('excel')} className="w-full text-left px-4 py-2 text-sm text-[#1B2B4B] hover:bg-[#F8FAFC]">Excel (.xlsx)</button>
-              </div>
+            <div className="relative">
+              <button onClick={() => setExportOpen(!exportOpen)} disabled={exporting} className="bg-[#F5B731] text-[#1B2B4B] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#F5B731]/90 disabled:opacity-50 transition-all">{exporting ? 'Exporting...' : <span className="inline-flex items-center gap-1.5"><LuDownload className="w-4 h-4" /> Export</span>}</button>
+              {exportOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setExportOpen(false)} />
+                  <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-[0_25px_50px_rgba(0,0,0,0.15)] border border-[#E2E8F0] py-1 z-20 min-w-[140px]">
+                    <button onClick={() => { handleExport('csv'); setExportOpen(false) }} className="w-full text-left px-4 py-2 text-sm text-[#1B2B4B] hover:bg-[#F8FAFC]">CSV</button>
+                    <button onClick={() => { handleExport('excel'); setExportOpen(false) }} className="w-full text-left px-4 py-2 text-sm text-[#1B2B4B] hover:bg-[#F8FAFC]">Excel (.xlsx)</button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
