@@ -39,13 +39,14 @@ export async function GET() {
         select: { startedAt: true, submittedAt: true },
       }),
       prisma.user.findMany({
-        where: { role: 'AGENT' },
+        where: { role: { in: ['AGENT', 'STATE_MANAGER'] } },
         orderBy: { createdAt: 'desc' },
         take: 10,
         select: {
           id: true,
           fullName: true,
           email: true,
+          role: true,
           state: true,
           createdAt: true,
         },

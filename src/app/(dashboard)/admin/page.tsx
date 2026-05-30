@@ -108,7 +108,7 @@ export default function AdminDashboard() {
             <table className="w-full">
               <thead>
                 <tr className="text-left text-[11px] font-semibold tracking-wider text-[#94A3B8] uppercase border-b border-[#E2E8F0]">
-                  <th className="px-4 py-2">Name</th><th className="px-4 py-2">Email</th><th className="px-4 py-2">State</th><th className="px-4 py-2">Date</th>
+                  <th className="px-4 py-2">Name</th><th className="px-4 py-2">Email</th><th className="px-4 py-2">Role</th><th className="px-4 py-2">State</th><th className="px-4 py-2">Date</th>
                 </tr>
               </thead>
               <tbody>
@@ -116,12 +116,17 @@ export default function AdminDashboard() {
                   <tr key={agent.id} className="border-b border-[#E2E8F0]/50 last:border-0 hover:bg-[#F8FAFC]">
                     <td className="px-4 py-3 text-sm font-medium text-[#1B2B4B]">{agent.fullName}</td>
                     <td className="px-4 py-3 text-sm text-[#94A3B8]">{agent.email}</td>
+                    <td className="px-4 py-3">
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${agent.role === 'STATE_MANAGER' ? 'bg-[#007bff]/10 text-[#007bff]' : 'bg-[#F5B731]/10 text-[#F5B731]'}`}>
+                        {agent.role === 'STATE_MANAGER' ? 'State Manager' : 'Agent'}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-sm text-[#94A3B8]">{agent.state || '-'}</td>
                     <td className="px-4 py-3 text-sm text-[#94A3B8]">{new Date(agent.createdAt).toLocaleDateString()}</td>
                   </tr>
                 ))}
                 {recentRegistrations.length === 0 && (
-                  <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-[#94A3B8]">No registrations yet</td></tr>
+                  <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-[#94A3B8]">No registrations yet</td></tr>
                 )}
               </tbody>
             </table>
