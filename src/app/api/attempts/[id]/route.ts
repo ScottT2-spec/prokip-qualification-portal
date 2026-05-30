@@ -47,21 +47,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         ...qq,
         question: {
           ...qq.question,
-          explanation: undefined,
-          options: qq.question.options.map(o => {
-            const opts = {
-              id: o.id,
-              text: o.text,
-              order: o.order,
-              questionId: o.questionId,
-            }
-            if (attempt.quiz.randomizeOptions) {
-              return opts
-            }
-            return opts
-          }),
+          explanation: undefined as string | null | undefined,
+          options: qq.question.options.map(o => ({
+            id: o.id,
+            text: o.text,
+            isCorrect: false as boolean,
+            order: o.order,
+            questionId: o.questionId,
+          })),
         },
-      }))
+      })) as typeof questions
       if (attempt.quiz.randomizeOptions) {
         questions = questions.map(qq => ({
           ...qq,

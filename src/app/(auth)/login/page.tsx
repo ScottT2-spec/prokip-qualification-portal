@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -30,16 +29,10 @@ export default function LoginPage() {
         return
       }
 
-      // Redirect based on role
       switch (data.user.role) {
-        case 'ADMIN':
-          router.push('/admin')
-          break
-        case 'STATE_MANAGER':
-          router.push('/manager')
-          break
-        default:
-          router.push('/dashboard')
+        case 'ADMIN': router.push('/admin'); break
+        case 'STATE_MANAGER': router.push('/manager'); break
+        default: router.push('/dashboard')
       }
     } catch {
       setError('Network error. Please try again.')
@@ -48,20 +41,20 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#0F1C32] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-[#F5B731]/15 rounded-2xl mb-4">
             <span className="text-3xl">🎓</span>
           </div>
           <h1 className="text-2xl font-bold text-white">Prokip Qualification</h1>
-          <p className="text-blue-200 text-sm mt-1">Agent Examination Portal</p>
+          <p className="text-[#94A3B8] text-sm mt-1">Agent Examination Portal</p>
         </div>
 
         {/* Login Card */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Sign In</h2>
+        <div className="bg-white rounded-[24px] shadow-[0_25px_50px_rgba(0,0,0,0.15)] p-8">
+          <h2 className="text-xl font-bold text-[#1B2B4B] mb-6">Sign In</h2>
 
           {error && (
             <div className="bg-red-50 border border-red-100 text-red-700 text-sm rounded-xl p-3 mb-4">
@@ -71,31 +64,31 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label className="text-xs font-semibold tracking-wider uppercase text-[#1B2B4B] mb-2 block">Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-sm transition-all"
+                className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 py-3 text-[15px] text-[#1B2B4B] outline-none transition-all focus:border-[#1B2B4B] focus:ring-[3px] focus:ring-[#1B2B4B]/10"
                 placeholder="you@example.com"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <label className="text-xs font-semibold tracking-wider uppercase text-[#1B2B4B] mb-2 block">Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-sm transition-all"
+                className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 py-3 text-[15px] text-[#1B2B4B] outline-none transition-all focus:border-[#1B2B4B] focus:ring-[3px] focus:ring-[#1B2B4B]/10"
                 placeholder="••••••••"
               />
             </div>
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full bg-[#0F1C32] text-white py-3 rounded-xl font-semibold text-[15px] hover:bg-[#1B2B4B] hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 transition-all"
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
