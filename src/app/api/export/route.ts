@@ -2,14 +2,41 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
 import * as XLSX from 'xlsx'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
-const STREAM_BATCH_SIZE = 5000 // Process in batches for 100K+ scale
+const STREAM_BATCH_SIZE = 5000
 
-/**
- * POST /api/export — Queue-based export for large datasets.
- * Creates an ExportJob, processes in batches, returns job ID.
- * Client polls GET /api/export?jobId=... for status.
- */
+function formatRow(agent: any) {
+  const attempt = agent.quizAttempts[0]
+  const result = attempt?.result
+  const startedAt = attempt?.startedAt ? new Date(attempt.startedAt) : null
+  const submittedAt = attempt?.submittedAt ? new Date(attempt.submittedAt) : null
+  let completionTime = 'N/A'
+  if (startedAt && submittedAt) {
+    const mins = Math.round((submittedAt.getTime() - startedAt.getTime()) / 60000)
+    completionTime = `${mins} min`
+  }
+
+  return {
+    'Full Name': agent.fullName,
+    'Phone Number': agent.phone,
+    'Email': agent.email,
+    'Country': agent.country || 'N/A',
+    'State': agent.state || 'N/A',
+    'Score': result?.totalScore ?? 'N/A',
+    'Percentage Score': result ? `${result.percentageScore}%` : 'N/A',
+    'Pass/Fail Status': result?.qualificationStatus === 'PASSED' ? 'PASSED' : result?.qualificationStatus === 'FAILED' ? 'FAILED' : attempt?.status || 'NOT_STARTED',
+    'Completion Time': completionTime,
+    'Registration Date': agent.createdAt.toISOString().split('T')[0],
+    'Submission Date': submittedAt ? submittedAt.toISOString().split('T')[0] : 'N/A',
+    'Device Type': 'N/A',
+    'Browser': 'N/A',
+    'Risk Level': 'Low',
+    'Integrity Status': result?.qualificationStatus === 'PASSED' || result?.qualificationStatus === 'FAILED' ? 'Verified' : 'Pending',
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const session = await requireAuth(['ADMIN', 'STATE_MANAGER'])
@@ -17,18 +44,16 @@ export async function POST(req: NextRequest) {
     const format = body.format || 'csv'
     const filters = body.filters || {}
 
-    // Create export job
     const job = await prisma.exportJob.create({
       data: {
         userId: session.id,
         format,
         filters: JSON.stringify(filters),
         status: 'PENDING',
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h expiry
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
       },
     })
 
-    // Process async (non-blocking)
     processExport(job.id, session).catch(err => {
       console.error(`Export job ${job.id} failed:`, err)
       prisma.exportJob.update({
@@ -45,18 +70,11 @@ export async function POST(req: NextRequest) {
   }
 }
 
-/**
- * GET /api/export — Either poll job status or do a direct (legacy) export.
- * 
- * With ?jobId=... → returns job status + download URL when ready.
- * Without jobId → legacy direct export (limited to 10K rows for safety).
- */
 export async function GET(req: NextRequest) {
   try {
     const session = await requireAuth(['ADMIN', 'STATE_MANAGER'])
     const { searchParams } = new URL(req.url)
 
-    // Poll mode: check job status
     const jobId = searchParams.get('jobId')
     if (jobId) {
       const job = await prisma.exportJob.findUnique({ where: { id: jobId } })
@@ -72,7 +90,6 @@ export async function GET(req: NextRequest) {
       })
     }
 
-    // Legacy direct export (capped at 10K for safety)
     const format = searchParams.get('format') || 'csv'
     const state = searchParams.get('state')
     const status = searchParams.get('status')
@@ -99,27 +116,11 @@ export async function GET(req: NextRequest) {
         },
       },
       orderBy: { createdAt: 'desc' },
-      take: 10_000, // Safety cap for direct export
+      take: 10_000,
     })
 
-    const data = agents.map(agent => {
-      const attempt = agent.quizAttempts[0]
-      const result = attempt?.result
-      return {
-        'Full Name': agent.fullName,
-        'Phone Number': agent.phone,
-        'Email': agent.email,
-        'Country': agent.country || '',
-        'State': agent.state || '',
-        'Score': result?.totalScore ?? 'N/A',
-        'Percentage': result ? `${result.percentageScore}%` : 'N/A',
-        'Result': result?.qualificationStatus || 'NOT_STARTED',
-        'Registration Date': agent.createdAt.toISOString().split('T')[0],
-        'Submission Date': attempt?.submittedAt?.toISOString().split('T')[0] || 'N/A',
-      }
-    })
-
-    const filteredData = status ? data.filter(d => d['Result'] === status) : data
+    const data = agents.map(formatRow)
+    const filteredData = status ? data.filter(d => d['Pass/Fail Status'] === status) : data
 
     if (format === 'csv') {
       const ws = XLSX.utils.json_to_sheet(filteredData)
@@ -135,12 +136,49 @@ export async function GET(req: NextRequest) {
     if (format === 'excel') {
       const wb = XLSX.utils.book_new()
       const ws = XLSX.utils.json_to_sheet(filteredData)
+
+      // Set column widths
+      ws['!cols'] = Object.keys(filteredData[0] || {}).map(k => ({ wch: Math.max(k.length + 2, 14) }))
+
       XLSX.utils.book_append_sheet(wb, ws, 'Agents')
       const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
       return new NextResponse(buffer, {
         headers: {
           'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
           'Content-Disposition': 'attachment; filename=prokip-agents-export.xlsx',
+        },
+      })
+    }
+
+    if (format === 'pdf') {
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+
+      // Header
+      doc.setFontSize(16)
+      doc.setTextColor(27, 43, 75)
+      doc.text('Prokip Agent Qualification Report', 14, 15)
+      doc.setFontSize(9)
+      doc.setTextColor(100)
+      doc.text(`Generated: ${new Date().toISOString().split('T')[0]}  |  Total Records: ${filteredData.length}`, 14, 22)
+
+      const columns = Object.keys(filteredData[0] || {})
+      const rows = filteredData.map(row => columns.map(c => String((row as any)[c])))
+
+      autoTable(doc, {
+        head: [columns],
+        body: rows,
+        startY: 27,
+        styles: { fontSize: 6.5, cellPadding: 1.5 },
+        headStyles: { fillColor: [15, 28, 50], textColor: 255, fontSize: 6.5, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        margin: { left: 6, right: 6 },
+      })
+
+      const pdfBuffer = Buffer.from(doc.output('arraybuffer'))
+      return new NextResponse(pdfBuffer, {
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': 'attachment; filename=prokip-agents-export.pdf',
         },
       })
     }
@@ -153,10 +191,6 @@ export async function GET(req: NextRequest) {
   }
 }
 
-/**
- * Background export processor — processes in batches of STREAM_BATCH_SIZE.
- * Handles 100K+ rows without OOM.
- */
 async function processExport(jobId: string, session: { id: string; role: string }) {
   await prisma.exportJob.update({
     where: { id: jobId },
@@ -169,7 +203,6 @@ async function processExport(jobId: string, session: { id: string; role: string 
   const filters = JSON.parse(job.filters || '{}')
   const where: Record<string, unknown> = { role: 'AGENT' }
 
-  // Apply scope for state managers
   if (session.role === 'STATE_MANAGER') {
     const sm = await prisma.stateManager.findUnique({
       where: { userId: session.id },
@@ -185,7 +218,6 @@ async function processExport(jobId: string, session: { id: string; role: string 
   const allData: Record<string, unknown>[] = []
   let cursor: string | undefined
 
-  // Batch processing with cursor pagination
   for (let processed = 0; processed < totalRows; ) {
     const batch = await prisma.user.findMany({
       where,
@@ -204,29 +236,15 @@ async function processExport(jobId: string, session: { id: string; role: string 
     if (batch.length === 0) break
 
     for (const agent of batch) {
-      const attempt = agent.quizAttempts[0]
-      const result = attempt?.result
-      allData.push({
-        'Full Name': agent.fullName,
-        'Phone Number': agent.phone,
-        'Email': agent.email,
-        'Country': agent.country || '',
-        'State': agent.state || '',
-        'Score': result?.totalScore ?? 'N/A',
-        'Percentage': result ? `${result.percentageScore}%` : 'N/A',
-        'Result': result?.qualificationStatus || 'NOT_STARTED',
-        'Registration Date': agent.createdAt.toISOString().split('T')[0],
-        'Submission Date': attempt?.submittedAt?.toISOString().split('T')[0] || 'N/A',
-      })
+      allData.push(formatRow(agent))
     }
 
     cursor = batch[batch.length - 1].id
     processed += batch.length
   }
 
-  // Apply status filter if provided
   const finalData = filters.status
-    ? allData.filter(d => d['Result'] === filters.status)
+    ? allData.filter(d => d['Pass/Fail Status'] === filters.status)
     : allData
 
   await prisma.exportJob.update({
