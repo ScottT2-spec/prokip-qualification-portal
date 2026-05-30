@@ -56,7 +56,7 @@ export default function AnalyticsPage() {
     if (stateFilter) params.set('state', stateFilter)
     try {
       const res = await fetch(`/api/agents?${params}`)
-      if (res.ok) { const d = await res.json(); setAgents(d.agents); setTotal(d.total) }
+      if (res.ok) { const d = await res.json(); setAgents(d.data || d.agents); setTotal(d.pagination?.total ?? d.total) }
     } catch {}
   }
   useEffect(() => { loadAgents() }, [page, search, stateFilter])
