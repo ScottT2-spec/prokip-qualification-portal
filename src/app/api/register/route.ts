@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { hashPassword, createToken } from '@/lib/auth'
+import { trackLocation } from '@/lib/location'
 
 export async function POST(req: NextRequest) {
   try {
@@ -56,6 +57,9 @@ export async function POST(req: NextRequest) {
         },
       })
     }
+
+    // Track location
+    trackLocation(user.id, 'REGISTRATION', req).catch(() => {})
 
     // Log registration
     await prisma.activityLog.create({

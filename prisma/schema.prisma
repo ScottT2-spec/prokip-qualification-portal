@@ -66,6 +66,7 @@ model User {
   referredAgents  ReferralLink[]   @relation("ManagerLinks")
   quizAttempts    QuizAttempt[]
   activityLogs    ActivityLog[]
+  locationLogs    LocationLog[]
   smInvite        SmInvite?        @relation("SmInviteUser")
 
   @@index([email])
@@ -309,6 +310,24 @@ model ExportJob {
   @@index([userId])
   @@index([status])
   @@index([createdAt])
+}
+
+model LocationLog {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event       String   // REGISTRATION | QUIZ_SUBMIT
+  ipAddress   String?
+  country     String?
+  state       String?
+  city        String?
+  flagged     Boolean  @default(false)
+  flagReason  String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([event])
+  @@index([flagged])
 }
 
 model ActivityLog {

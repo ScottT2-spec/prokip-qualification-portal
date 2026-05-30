@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth'
+import { trackLocation } from '@/lib/location'
 
 // POST submit quiz attempt
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -107,6 +108,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         qualificationStatus: passed ? 'PASSED' : 'FAILED',
       },
     })
+
+    // Track submission location & flag mismatches
+    trackLocation(session.id, 'QUIZ_SUBMIT', req).catch(() => {})
 
     await prisma.activityLog.create({
       data: {
