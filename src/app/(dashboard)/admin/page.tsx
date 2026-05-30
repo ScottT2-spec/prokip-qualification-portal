@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LuUsers, LuFileText, LuCircleCheck, LuCircleX, LuChartBar, LuTrophy, LuTrendingDown, LuAward, LuGraduationCap } from 'react-icons/lu'
+import { LuUsers, LuFileText, LuCircleCheck, LuCircleX, LuChartBar, LuTrophy, LuTrendingDown, LuAward, LuGraduationCap, LuChevronDown, LuChevronUp } from 'react-icons/lu'
 
 interface Metrics {
   totalRegistrations: number; totalAttempts: number; passRate: number; failureRate: number
@@ -15,6 +15,7 @@ export default function AdminDashboard() {
   const [metrics, setMetrics] = useState<Metrics | null>(null)
   const [recentRegistrations, setRecentRegistrations] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [showAllRegistrations, setShowAllRegistrations] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -103,7 +104,7 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {recentRegistrations.map((agent: any) => (
+                {(showAllRegistrations ? recentRegistrations : recentRegistrations.slice(0, 5)).map((agent: any) => (
                   <tr key={agent.id} className="border-b border-[#E2E8F0]/50 last:border-0 hover:bg-[#F8FAFC]">
                     <td className="px-4 py-3 text-sm font-medium text-[#1B2B4B]">{agent.fullName}</td>
                     <td className="px-4 py-3 text-sm text-[#94A3B8]">{agent.email}</td>
@@ -117,6 +118,20 @@ export default function AdminDashboard() {
               </tbody>
             </table>
           </div>
+          {recentRegistrations.length > 5 && (
+            <div className="border-t border-[#E2E8F0]">
+              <button
+                onClick={() => setShowAllRegistrations(!showAllRegistrations)}
+                className="w-full py-2.5 text-sm font-medium text-[#1B2B4B] hover:text-[#F5B731] transition-colors flex items-center justify-center gap-1.5"
+              >
+                {showAllRegistrations ? (
+                  <><LuChevronUp className="w-4 h-4" /> Show less</>
+                ) : (
+                  <><LuChevronDown className="w-4 h-4" /> Show {recentRegistrations.length - 5} more</>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       </main>
     </div>
