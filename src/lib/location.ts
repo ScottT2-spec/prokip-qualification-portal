@@ -46,7 +46,7 @@ export async function trackLocation(
   let flagReason: string | null = null
 
   if (event === 'QUIZ_SUBMIT') {
-    const regLog = await prisma.locationLog.findFirst({
+    const regLog = await (prisma as any).locationLog?.findFirst({
       where: { userId, event: 'REGISTRATION' },
       orderBy: { createdAt: 'desc' },
     })
@@ -71,7 +71,7 @@ export async function trackLocation(
     }
   }
 
-  await prisma.locationLog.create({
+  await (prisma as any).locationLog?.create({
     data: {
       userId, event, ipAddress: ip,
       country: geo.country, state: geo.state, city: geo.city,
