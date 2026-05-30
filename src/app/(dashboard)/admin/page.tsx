@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LuUsers, LuFileText, LuCircleCheck, LuCircleX, LuChartBar, LuTrophy, LuTrendingDown, LuAward, LuGraduationCap, LuChevronDown, LuChevronUp, LuMap, LuUserCog, LuClock, LuShieldAlert, LuArrowDown } from 'react-icons/lu'
+import {
+  LuUsers, LuFileText, LuCircleCheck, LuCircleX, LuChartBar, LuTrophy, LuAward, LuGraduationCap, LuChevronDown, LuChevronUp, LuMap, LuUserCog, LuClock, LuShieldAlert, LuArrowDown
+} from 'react-icons/lu'
 
 interface Metrics {
   totalCandidates: number; totalStates: number; totalStateManagers: number; totalSubmissions: number

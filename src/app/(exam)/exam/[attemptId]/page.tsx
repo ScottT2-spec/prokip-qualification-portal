@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import ExamInterface from '@/components/exam/ExamInterface'
-import { LuCircleX, LuCircleCheck } from 'react-icons/lu'
+import {
+  LuCircleX, LuCircleCheck
+} from 'react-icons/lu'
 
 export default function ExamPage() {
   const params = useParams()

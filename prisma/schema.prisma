@@ -66,11 +66,19 @@ model User {
   referredAgents  ReferralLink[]   @relation("ManagerLinks")
   quizAttempts    QuizAttempt[]
   activityLogs    ActivityLog[]
+  locationLogs    LocationLog[]
   smInvite        SmInvite?        @relation("SmInviteUser")
 
   @@index([email])
   @@index([phone])
   @@index([role])
+  @@index([state])
+  @@index([country])
+  @@index([isActive])
+  @@index([createdAt])
+  @@index([role, state])
+  @@index([role, createdAt])
+  @@index([role, isActive])
 }
 
 model StateManager {
@@ -206,6 +214,10 @@ model QuizAttempt {
   @@index([userId])
   @@index([quizId])
   @@index([status])
+  @@index([submittedAt])
+  @@index([percentageScore])
+  @@index([userId, status])
+  @@index([quizId, status])
 }
 
 model Answer {
@@ -236,6 +248,9 @@ model Result {
   createdAt           DateTime           @default(now())
 
   @@index([qualificationStatus])
+  @@index([percentageScore])
+  @@index([createdAt])
+  @@index([qualificationStatus, percentageScore])
 }
 
 model Settings {
@@ -268,6 +283,51 @@ model SmInviteState {
   country     String   @default("Nigeria")
 
   @@index([inviteId])
+}
+
+enum ExportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model ExportJob {
+  id          String       @id @default(cuid())
+  userId      String
+  format      String       @default("csv")
+  filters     String?      // JSON string of applied filters
+  status      ExportStatus @default(PENDING)
+  totalRows   Int?
+  filePath    String?
+  fileUrl     String?
+  error       String?
+  startedAt   DateTime?
+  completedAt DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime     @default(now())
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model LocationLog {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event       String   // REGISTRATION | QUIZ_SUBMIT
+  ipAddress   String?
+  country     String?
+  state       String?
+  city        String?
+  flagged     Boolean  @default(false)
+  flagReason  String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([event])
+  @@index([flagged])
 }
 
 model ActivityLog {

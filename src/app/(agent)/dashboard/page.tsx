@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { LuGraduationCap, LuFileText, LuCircleCheck, LuCircleX, LuClock, LuRefreshCw } from 'react-icons/lu'
+import {
+  LuGraduationCap, LuFileText, LuCircleCheck, LuCircleX, LuClock, LuRefreshCw
+} from 'react-icons/lu'
+
 
 interface Quiz {
   id: string; title: string; description: string; duration: number; status: string
@@ -17,6 +20,7 @@ export default function AgentDashboard() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([])
   const [loading, setLoading] = useState(true)
   const [starting, setStarting] = useState<string | null>(null)
+
 
   useEffect(() => {
     async function load() {
