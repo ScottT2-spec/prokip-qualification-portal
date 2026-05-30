@@ -1,8 +1,19 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { LuX, LuPlus, LuTrash2, LuCircleCheck, LuCircleAlert, LuUpload } from 'react-icons/lu'
+
+interface BulkQuestion {
+  text: string; type: string; category: string; difficulty: string; marks: number; explanation: string
+  options: Array<{ text: string; isCorrect: boolean }>
+}
+
+const emptyQuestion = (): BulkQuestion => ({
+  text: '', type: 'MULTIPLE_CHOICE', category: '', difficulty: 'MEDIUM', marks: 1, explanation: '',
+  options: [{ text: '', isCorrect: true }, { text: '', isCorrect: false }, { text: '', isCorrect: false }, { text: '', isCorrect: false }],
+})
 
 export default function ManageQuizPage() {
   const params = useParams()
@@ -15,47 +26,15 @@ export default function ManageQuizPage() {
     options: [{ text: '', isCorrect: false }, { text: '', isCorrect: false }, { text: '', isCorrect: false }, { text: '', isCorrect: false }],
   })
   const [saving, setSaving] = useState(false)
-  const [bulkUploading, setBulkUploading] = useState(false)
-  const [bulkResult, setBulkResult] = useState<string | null>(null)
 
-  const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setBulkUploading(true); setBulkResult(null)
-    try {
-      const text = await file.text()
-      const rows = text.split('\n').filter(r => r.trim())
-      const headers = rows[0].split(',').map(h => h.trim().toLowerCase())
-      const questions = rows.slice(1).map(row => {
-        const cols = row.split(',').map(c => c.trim())
-        const q: any = { type: 'MULTIPLE_CHOICE', difficulty: 'MEDIUM', marks: 1, options: [] }
-        headers.forEach((h, i) => {
-          const v = cols[i] || ''
-          if (h === 'question' || h === 'text') q.text = v
-          else if (h === 'type') q.type = v.toUpperCase() || 'MULTIPLE_CHOICE'
-          else if (h === 'category') q.category = v
-          else if (h === 'difficulty') q.difficulty = v.toUpperCase() || 'MEDIUM'
-          else if (h === 'marks') q.marks = parseFloat(v) || 1
-          else if (h === 'explanation') q.explanation = v
-          else if (h.startsWith('option')) q.options.push({ text: v, isCorrect: false })
-          else if (h === 'answer' || h === 'correct') {
-            const answers = v.split(';').map(a => a.trim().toUpperCase())
-            answers.forEach(a => {
-              const idx = a.charCodeAt(0) - 65
-              if (q.options[idx]) q.options[idx].isCorrect = true
-            })
-          }
-        })
-        return q
-      }).filter(q => q.text && q.options.length >= 2)
-
-      const res = await fetch('/api/questions/bulk', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quizId, questions }) })
-      const data = await res.json()
-      if (res.ok) { setBulkResult(`✅ ${data.created || questions.length} questions uploaded`); loadQuiz() }
-      else setBulkResult(`❌ ${data.error}`)
-    } catch { setBulkResult('❌ Failed to parse file') }
-    finally { setBulkUploading(false); e.target.value = '' }
-  }
+  // Bulk Add state
+  const [showBulk, setShowBulk] = useState(false)
+  const [bulkQuestions, setBulkQuestions] = useState<BulkQuestion[]>([emptyQuestion()])
+  const [bulkSubmitting, setBulkSubmitting] = useState(false)
+  const [bulkResult, setBulkResult] = useState<{ success: boolean; message: string } | null>(null)
+  const [showJsonPaste, setShowJsonPaste] = useState(false)
+  const [jsonText, setJsonText] = useState('')
+  const jsonRef = useRef<HTMLTextAreaElement>(null)
 
   const loadQuiz = async () => { try { const res = await fetch(`/api/quizzes/${quizId}`); if (res.ok) { const data = await res.json(); setQuiz(data.quiz) } } catch {} finally { setLoading(false) } }
   useEffect(() => { loadQuiz() }, [quizId])
@@ -81,6 +60,50 @@ export default function ManageQuizPage() {
   const addOption = () => setQForm(prev => ({ ...prev, options: [...prev.options, { text: '', isCorrect: false }] }))
   const removeOption = (index: number) => { if (qForm.options.length <= 2) return; setQForm(prev => ({ ...prev, options: prev.options.filter((_, i) => i !== index) })) }
 
+  // Bulk Add handlers
+  const updateBulkQ = (idx: number, field: string, value: any) => {
+    setBulkQuestions(prev => { const next = [...prev]; (next[idx] as any)[field] = value; return next })
+  }
+  const updateBulkOption = (qIdx: number, oIdx: number, field: string, value: any) => {
+    setBulkQuestions(prev => {
+      const next = [...prev]; const opts = [...next[qIdx].options]; (opts[oIdx] as any)[field] = value
+      if (field === 'isCorrect' && value && next[qIdx].type !== 'MULTIPLE_ANSWERS') opts.forEach((o, i) => { if (i !== oIdx) o.isCorrect = false })
+      next[qIdx].options = opts; return next
+    })
+  }
+  const addBulkOption = (qIdx: number) => setBulkQuestions(prev => { const next = [...prev]; next[qIdx].options.push({ text: '', isCorrect: false }); return next })
+  const removeBulkOption = (qIdx: number, oIdx: number) => setBulkQuestions(prev => { const next = [...prev]; next[qIdx].options.splice(oIdx, 1); return next })
+  const addBulkQuestion = () => setBulkQuestions(prev => [...prev, emptyQuestion()])
+  const removeBulkQuestion = (idx: number) => setBulkQuestions(prev => prev.filter((_, i) => i !== idx))
+
+  const handleJsonPaste = () => {
+    try {
+      const parsed = JSON.parse(jsonText)
+      const qs: BulkQuestion[] = (Array.isArray(parsed) ? parsed : parsed.questions || []).map((q: any) => ({
+        text: q.text || q.question || '', type: q.type || 'MULTIPLE_CHOICE', category: q.category || '', difficulty: q.difficulty || 'MEDIUM',
+        marks: q.marks || 1, explanation: q.explanation || '',
+        options: (q.options || q.answers || []).map((o: any) => typeof o === 'string' ? { text: o, isCorrect: false } : { text: o.text || o.answer || '', isCorrect: !!o.isCorrect || !!o.correct }),
+      }))
+      if (qs.length === 0) { setBulkResult({ success: false, message: 'No questions found in JSON' }); return }
+      setBulkQuestions(qs); setShowJsonPaste(false); setJsonText(''); setBulkResult({ success: true, message: `${qs.length} questions loaded from JSON` })
+    } catch { setBulkResult({ success: false, message: 'Invalid JSON format' }) }
+  }
+
+  const submitBulk = async () => {
+    setBulkSubmitting(true); setBulkResult(null)
+    try {
+      const res = await fetch('/api/questions/bulk', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questions: bulkQuestions, quizId }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setBulkResult({ success: true, message: `${data.created} questions created successfully!` })
+        setBulkQuestions([emptyQuestion()]); loadQuiz()
+      } else { setBulkResult({ success: false, message: data.error || 'Failed to create questions' }) }
+    } catch { setBulkResult({ success: false, message: 'Network error' }) } finally { setBulkSubmitting(false) }
+  }
+
   const inputClass = "w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm text-[#1B2B4B] outline-none transition-all focus:border-[#1B2B4B] focus:ring-[3px] focus:ring-[#1B2B4B]/10"
   const labelClass = "text-xs font-semibold tracking-wider uppercase text-[#1B2B4B] mb-1 block"
 
@@ -96,20 +119,14 @@ export default function ManageQuizPage() {
           </div>
           <div className="flex gap-2">
             <button onClick={() => setShowAddQuestion(!showAddQuestion)} className="bg-[#F5B731] text-[#1B2B4B] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#F5B731]/90 transition-all">+ Add Question</button>
-            <label className="bg-white text-[#1B2B4B] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-white/90 transition-all cursor-pointer">
-              {bulkUploading ? 'Uploading...' : '📄 Bulk Upload'}
-              <input type="file" accept=".csv" onChange={handleBulkUpload} className="hidden" disabled={bulkUploading} />
-            </label>
+            <button onClick={() => { setShowBulk(true); setBulkResult(null); setBulkQuestions([emptyQuestion()]) }} className="flex items-center gap-1.5 bg-white text-[#1B2B4B] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-white/90 transition-all">
+              <LuUpload className="w-4 h-4" /> Bulk Add
+            </button>
           </div>
         </div>
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-6">
-        {bulkResult && (
-          <div className={`rounded-xl p-3 mb-4 text-sm ${bulkResult.startsWith('✅') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-            {bulkResult} <button onClick={() => setBulkResult(null)} className="ml-2 underline">dismiss</button>
-          </div>
-        )}
         {showAddQuestion && (
           <div className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-[0_1px_3px_rgba(0,0,0,0.05)] p-6 mb-6">
             <h3 className="font-semibold text-[#1B2B4B] mb-4">Add Question</h3>
@@ -169,6 +186,84 @@ export default function ManageQuizPage() {
             </div>
           ))}
         </div>
+
+        {/* Bulk Add Modal */}
+        {showBulk && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center p-4 overflow-y-auto">
+            <div className="bg-white rounded-[20px] w-full max-w-3xl my-8 shadow-2xl">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-[#E2E8F0]">
+                <h2 className="text-lg font-bold text-[#1B2B4B]">Bulk Add Questions</h2>
+                <button onClick={() => setShowBulk(false)} className="text-[#94A3B8] hover:text-[#1B2B4B]"><LuX className="w-5 h-5" /></button>
+              </div>
+              <div className="px-6 py-4 border-b border-[#E2E8F0] flex flex-wrap gap-3 items-center">
+                <span className="text-sm text-[#1B2B4B] font-medium">Adding to: <span className="text-[#F5B731]">{quiz?.title}</span></span>
+                <button onClick={() => setShowJsonPaste(!showJsonPaste)} className="text-sm text-[#007bff] hover:underline ml-auto">
+                  {showJsonPaste ? 'Hide' : '📋 Paste JSON'}
+                </button>
+                <span className="text-xs text-[#94A3B8]">{bulkQuestions.length} question{bulkQuestions.length !== 1 ? 's' : ''}</span>
+              </div>
+
+              {showJsonPaste && (
+                <div className="px-6 py-4 border-b border-[#E2E8F0] bg-[#F8FAFC]">
+                  <p className="text-xs text-[#94A3B8] mb-2">Paste a JSON array of questions. Format: [{`{ "text": "...", "type": "MULTIPLE_CHOICE", "options": [{ "text": "...", "isCorrect": true }] }`}]</p>
+                  <textarea ref={jsonRef} value={jsonText} onChange={e => setJsonText(e.target.value)} rows={6} className={inputClass + " font-mono text-xs"} placeholder='[{"text": "What is...?", "type": "MULTIPLE_CHOICE", "category": "General", "options": [{"text": "Option A", "isCorrect": true}, {"text": "Option B", "isCorrect": false}]}]' />
+                  <button onClick={handleJsonPaste} className="mt-2 px-4 py-1.5 rounded-lg text-sm font-medium bg-[#1B2B4B] text-white hover:bg-[#0F1C32]">Parse JSON</button>
+                </div>
+              )}
+
+              {bulkResult && (
+                <div className={`mx-6 mt-4 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm ${bulkResult.success ? 'bg-[#28a745]/10 text-[#28a745]' : 'bg-[#dc3545]/10 text-[#dc3545]'}`}>
+                  {bulkResult.success ? <LuCircleCheck className="w-4 h-4" /> : <LuCircleAlert className="w-4 h-4" />} {bulkResult.message}
+                </div>
+              )}
+
+              <div className="px-6 py-4 max-h-[60vh] overflow-y-auto space-y-4">
+                {bulkQuestions.map((q, qi) => (
+                  <div key={qi} className="border border-[#E2E8F0] rounded-[16px] p-4 bg-[#F8FAFC]">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-semibold text-[#1B2B4B]">Question {qi + 1}</span>
+                      {bulkQuestions.length > 1 && <button onClick={() => removeBulkQuestion(qi)} className="text-[#dc3545] hover:text-[#dc3545]/80"><LuTrash2 className="w-4 h-4" /></button>}
+                    </div>
+                    <textarea value={q.text} onChange={e => updateBulkQ(qi, 'text', e.target.value)} rows={2} className={inputClass + " mb-2"} placeholder="Question text..." />
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      <select value={q.type} onChange={e => updateBulkQ(qi, 'type', e.target.value)} className={inputClass + " !w-auto text-xs"}>
+                        <option value="MULTIPLE_CHOICE">Multiple Choice</option><option value="MULTIPLE_ANSWERS">Multiple Answers</option>
+                        <option value="TRUE_FALSE">True/False</option><option value="SHORT_ANSWER">Short Answer</option><option value="SCENARIO">Scenario</option>
+                      </select>
+                      <input value={q.category} onChange={e => updateBulkQ(qi, 'category', e.target.value)} className={inputClass + " !w-28 text-xs"} placeholder="Category" />
+                      <select value={q.difficulty} onChange={e => updateBulkQ(qi, 'difficulty', e.target.value)} className={inputClass + " !w-auto text-xs"}>
+                        <option value="EASY">Easy</option><option value="MEDIUM">Medium</option><option value="HARD">Hard</option>
+                      </select>
+                      <input type="number" value={q.marks} onChange={e => updateBulkQ(qi, 'marks', Number(e.target.value))} className={inputClass + " !w-16 text-xs"} min={1} />
+                    </div>
+                    {q.type !== 'SHORT_ANSWER' && (
+                      <div className="space-y-1.5">
+                        {q.options.map((opt, oi) => (
+                          <div key={oi} className="flex items-center gap-2">
+                            <button onClick={() => updateBulkOption(qi, oi, 'isCorrect', !opt.isCorrect)}
+                              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${opt.isCorrect ? 'border-[#28a745] bg-[#28a745]' : 'border-[#E2E8F0]'}`}>
+                              {opt.isCorrect && <span className="text-white text-xs">✓</span>}
+                            </button>
+                            <input value={opt.text} onChange={e => updateBulkOption(qi, oi, 'text', e.target.value)} className={inputClass + " flex-1 text-xs"} placeholder={`Option ${oi + 1}`} />
+                            {q.options.length > 2 && <button onClick={() => removeBulkOption(qi, oi)} className="text-[#94A3B8] hover:text-[#dc3545]"><LuX className="w-3.5 h-3.5" /></button>}
+                          </div>
+                        ))}
+                        <button onClick={() => addBulkOption(qi)} className="text-xs text-[#007bff] hover:underline mt-1">+ Add option</button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="px-6 py-4 border-t border-[#E2E8F0] flex items-center justify-between">
+                <button onClick={addBulkQuestion} className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium text-[#1B2B4B] bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-white"><LuPlus className="w-4 h-4" /> Add Question</button>
+                <button onClick={submitBulk} disabled={bulkSubmitting || bulkQuestions.every(q => !q.text)}
+                  className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-[#0F1C32] text-white hover:bg-[#1B2B4B] disabled:opacity-50 transition-all">
+                  {bulkSubmitting ? 'Saving...' : `Save ${bulkQuestions.length} Question${bulkQuestions.length !== 1 ? 's' : ''}`}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   )
