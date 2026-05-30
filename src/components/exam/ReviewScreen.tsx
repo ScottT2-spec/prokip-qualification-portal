@@ -1,6 +1,6 @@
 'use client'
 
-import { LuAlertTriangle } from 'react-icons/lu'
+import { LuTriangleAlert } from 'react-icons/lu'
 
 interface QuizQuestion { id: string; order: number; question: { id: string; text: string } }
 interface Answer { questionId: string; selectedOptions: string[]; textAnswer?: string }
@@ -40,7 +40,7 @@ export default function ReviewScreen({ questions, answers, onGoToQuestion, onSub
 
           {unanswered.length > 0 && (
             <div>
-              <p className="text-sm font-semibold text-[#1B2B4B] mb-2 flex items-center gap-1.5"><LuAlertTriangle className="w-4 h-4 text-[#F5B731]" /> Unanswered Questions</p>
+              <p className="text-sm font-semibold text-[#1B2B4B] mb-2 flex items-center gap-1.5"><LuTriangleAlert className="w-4 h-4 text-[#F5B731]" /> Unanswered Questions</p>
               <div className="space-y-1 max-h-40 overflow-y-auto">
                 {unanswered.map((qq) => (
                   <button key={qq.id} onClick={() => onGoToQuestion(questions.indexOf(qq))}
@@ -53,7 +53,7 @@ export default function ReviewScreen({ questions, answers, onGoToQuestion, onSub
           )}
 
           <div className="bg-[#dc3545]/10 border border-[#dc3545]/20 rounded-xl p-4">
-            <p className="text-sm text-[#dc3545] font-medium flex items-center gap-1.5"><LuAlertTriangle className="w-4 h-4 flex-shrink-0" /> Once submitted, you cannot change your answers.</p>
+            <p className="text-sm text-[#dc3545] font-medium flex items-center gap-1.5"><LuTriangleAlert className="w-4 h-4 flex-shrink-0" /> Once submitted, you cannot change your answers.</p>
           </div>
 
           <div className="flex gap-3 pt-2">

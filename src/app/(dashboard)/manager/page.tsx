@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { LuUsers, LuFileText, LuCheckCircle, LuXCircle, LuClock, LuGraduationCap, LuDownload } from 'react-icons/lu'
+import { LuUsers, LuFileText, LuCircleCheck, LuCircleX, LuClock, LuGraduationCap, LuDownload } from 'react-icons/lu'
 
 export default function ManagerDashboard() {
   const router = useRouter()
@@ -53,8 +53,8 @@ export default function ManagerDashboard() {
           {[
             { label: 'Registered', value: metrics.totalRegistered, icon: <LuUsers className="w-5 h-5 text-[#1B2B4B]" /> },
             { label: 'Submitted', value: metrics.submitted, icon: <LuFileText className="w-5 h-5 text-[#1B2B4B]" /> },
-            { label: 'Passed', value: metrics.passed, icon: <LuCheckCircle className="w-5 h-5 text-[#28a745]" /> },
-            { label: 'Failed', value: metrics.failed, icon: <LuXCircle className="w-5 h-5 text-[#dc3545]" /> },
+            { label: 'Passed', value: metrics.passed, icon: <LuCircleCheck className="w-5 h-5 text-[#28a745]" /> },
+            { label: 'Failed', value: metrics.failed, icon: <LuCircleX className="w-5 h-5 text-[#dc3545]" /> },
             { label: 'Not Started', value: metrics.notStarted, icon: <LuClock className="w-5 h-5 text-[#94A3B8]" /> },
           ].map((m, i) => (
             <div key={i} className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-[0_1px_3px_rgba(0,0,0,0.05)] p-4 text-center">

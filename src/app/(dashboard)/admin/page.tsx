@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LuUsers, LuFileText, LuCheckCircle, LuXCircle, LuBarChart3, LuTrophy, LuTrendingDown, LuAward, LuGraduationCap } from 'react-icons/lu'
+import { LuUsers, LuFileText, LuCircleCheck, LuCircleX, LuChartBar, LuTrophy, LuTrendingDown, LuAward, LuGraduationCap } from 'react-icons/lu'
 
 interface Metrics {
   totalRegistrations: number; totalAttempts: number; passRate: number; failureRate: number
@@ -36,9 +36,9 @@ export default function AdminDashboard() {
   const cards = metrics ? [
     { label: 'Total Registrations', value: metrics.totalRegistrations, icon: <LuUsers className="w-5 h-5 text-[#1B2B4B]" /> },
     { label: 'Total Attempts', value: metrics.totalAttempts, icon: <LuFileText className="w-5 h-5 text-[#1B2B4B]" /> },
-    { label: 'Pass Rate', value: `${metrics.passRate}%`, icon: <LuCheckCircle className="w-5 h-5 text-[#28a745]" /> },
-    { label: 'Failure Rate', value: `${metrics.failureRate}%`, icon: <LuXCircle className="w-5 h-5 text-[#dc3545]" /> },
-    { label: 'Average Score', value: `${metrics.averageScore}%`, icon: <LuBarChart3 className="w-5 h-5 text-[#1B2B4B]" /> },
+    { label: 'Pass Rate', value: `${metrics.passRate}%`, icon: <LuCircleCheck className="w-5 h-5 text-[#28a745]" /> },
+    { label: 'Failure Rate', value: `${metrics.failureRate}%`, icon: <LuCircleX className="w-5 h-5 text-[#dc3545]" /> },
+    { label: 'Average Score', value: `${metrics.averageScore}%`, icon: <LuChartBar className="w-5 h-5 text-[#1B2B4B]" /> },
     { label: 'Highest Score', value: `${metrics.highestScore}%`, icon: <LuTrophy className="w-5 h-5 text-[#F5B731]" /> },
     { label: 'Lowest Score', value: `${metrics.lowestScore}%`, icon: <LuTrendingDown className="w-5 h-5 text-[#94A3B8]" /> },
     { label: 'Passed', value: metrics.passedCount, icon: <LuAward className="w-5 h-5 text-[#28a745]" /> },

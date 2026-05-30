@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { LuGraduationCap, LuFileText, LuCheckCircle, LuXCircle, LuClock, LuRefreshCw } from 'react-icons/lu'
+import { LuGraduationCap, LuFileText, LuCircleCheck, LuCircleX, LuClock, LuRefreshCw } from 'react-icons/lu'
 
 interface Quiz {
   id: string; title: string; description: string; duration: number; status: string
@@ -86,7 +86,7 @@ export default function AgentDashboard() {
                           <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg font-semibold ${
                             lastAttempt.passed ? 'bg-[#28a745]/10 text-[#28a745]' : 'bg-[#dc3545]/10 text-[#dc3545]'
                           }`}>
-                            <span className="inline-flex items-center gap-1">{lastAttempt.passed ? <><LuCheckCircle className="w-3.5 h-3.5" /> Passed</> : <><LuXCircle className="w-3.5 h-3.5" /> Failed</>}{lastAttempt.percentageScore !== null && ` (${lastAttempt.percentageScore}%)`}</span>
+                            <span className="inline-flex items-center gap-1">{lastAttempt.passed ? <><LuCircleCheck className="w-3.5 h-3.5" /> Passed</> : <><LuCircleX className="w-3.5 h-3.5" /> Failed</>}{lastAttempt.percentageScore !== null && ` (${lastAttempt.percentageScore}%)`}</span>
                           </span>
                         )}
                         {isInProgress && <span className="inline-flex items-center gap-1 text-xs bg-[#FEF3C7] text-[#F5B731] px-2.5 py-1 rounded-lg font-semibold"><LuRefreshCw className="w-3.5 h-3.5" /> In Progress</span>}
