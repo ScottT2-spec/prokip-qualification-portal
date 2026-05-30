@@ -10,51 +10,79 @@ export default function ManageQuizPage() {
   const [quiz, setQuiz] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [showAddQuestion, setShowAddQuestion] = useState(false)
+  const [showBulkAdd, setShowBulkAdd] = useState(false)
   const [qForm, setQForm] = useState({
     text: '', type: 'MULTIPLE_CHOICE', category: 'General', difficulty: 'MEDIUM', marks: 1, explanation: '', scenarioText: '',
     options: [{ text: '', isCorrect: false }, { text: '', isCorrect: false }, { text: '', isCorrect: false }, { text: '', isCorrect: false }],
   })
   const [saving, setSaving] = useState(false)
-  const [bulkUploading, setBulkUploading] = useState(false)
+
+  // Bulk add state
+  const [bulkText, setBulkText] = useState('')
+  const [bulkCategory, setBulkCategory] = useState('General')
+  const [bulkDifficulty, setBulkDifficulty] = useState('MEDIUM')
+  const [bulkSaving, setBulkSaving] = useState(false)
   const [bulkResult, setBulkResult] = useState<string | null>(null)
 
-  const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setBulkUploading(true); setBulkResult(null)
-    try {
-      const text = await file.text()
-      const rows = text.split('\n').filter(r => r.trim())
-      const headers = rows[0].split(',').map(h => h.trim().toLowerCase())
-      const questions = rows.slice(1).map(row => {
-        const cols = row.split(',').map(c => c.trim())
-        const q: any = { type: 'MULTIPLE_CHOICE', difficulty: 'MEDIUM', marks: 1, options: [] }
-        headers.forEach((h, i) => {
-          const v = cols[i] || ''
-          if (h === 'question' || h === 'text') q.text = v
-          else if (h === 'type') q.type = v.toUpperCase() || 'MULTIPLE_CHOICE'
-          else if (h === 'category') q.category = v
-          else if (h === 'difficulty') q.difficulty = v.toUpperCase() || 'MEDIUM'
-          else if (h === 'marks') q.marks = parseFloat(v) || 1
-          else if (h === 'explanation') q.explanation = v
-          else if (h.startsWith('option')) q.options.push({ text: v, isCorrect: false })
-          else if (h === 'answer' || h === 'correct') {
-            const answers = v.split(';').map(a => a.trim().toUpperCase())
-            answers.forEach(a => {
-              const idx = a.charCodeAt(0) - 65
-              if (q.options[idx]) q.options[idx].isCorrect = true
-            })
-          }
-        })
-        return q
-      }).filter(q => q.text && q.options.length >= 2)
+  const parseBulkQuestions = (text: string) => {
+    const blocks = text.split(/\n\s*\n/).filter(b => b.trim())
+    return blocks.map(block => {
+      const lines = block.split('\n').map(l => l.trim()).filter(Boolean)
+      if (lines.length < 3) return null
 
-      const res = await fetch('/api/questions/bulk', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quizId, questions }) })
+      const questionText = lines[0].replace(/^\d+[\.\)]\s*/, '')
+      const options: { text: string; isCorrect: boolean }[] = []
+      let answerLine = ''
+
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i]
+        if (/^(Answer|Correct|Ans)[\s:]/i.test(line)) {
+          answerLine = line.replace(/^(Answer|Correct|Ans)[\s:]+/i, '').trim().toUpperCase()
+        } else if (/^[A-Z][\.\)]\s/.test(line)) {
+          options.push({ text: line.replace(/^[A-Z][\.\)]\s*/, ''), isCorrect: false })
+        }
+      }
+
+      if (answerLine && options.length > 0) {
+        const answers = answerLine.split(/[,;]/).map(a => a.trim())
+        answers.forEach(a => {
+          const idx = a.charCodeAt(0) - 65
+          if (options[idx]) options[idx].isCorrect = true
+        })
+      }
+
+      if (!questionText || options.length < 2) return null
+      return {
+        text: questionText,
+        type: options.length > 0 ? 'MULTIPLE_CHOICE' : 'SHORT_ANSWER',
+        category: bulkCategory,
+        difficulty: bulkDifficulty,
+        marks: 1,
+        options,
+      }
+    }).filter(Boolean)
+  }
+
+  const handleBulkAdd = async () => {
+    const questions = parseBulkQuestions(bulkText)
+    if (questions.length === 0) { setBulkResult('❌ No valid questions found. Check the format.'); return }
+    setBulkSaving(true); setBulkResult(null)
+    try {
+      const res = await fetch('/api/questions/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quizId, questions }),
+      })
       const data = await res.json()
-      if (res.ok) { setBulkResult(`✅ ${data.created || questions.length} questions uploaded`); loadQuiz() }
-      else setBulkResult(`❌ ${data.error}`)
-    } catch { setBulkResult('❌ Failed to parse file') }
-    finally { setBulkUploading(false); e.target.value = '' }
+      if (res.ok) {
+        setBulkResult(`✅ ${data.created || questions.length} questions added`)
+        setBulkText('')
+        loadQuiz()
+      } else {
+        setBulkResult(`❌ ${data.error}`)
+      }
+    } catch { setBulkResult('❌ Failed to add questions') }
+    finally { setBulkSaving(false) }
   }
 
   const loadQuiz = async () => { try { const res = await fetch(`/api/quizzes/${quizId}`); if (res.ok) { const data = await res.json(); setQuiz(data.quiz) } } catch {} finally { setLoading(false) } }
@@ -95,11 +123,8 @@ export default function ManageQuizPage() {
             <h1 className="text-lg font-bold text-white mt-1">{quiz?.title}</h1>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => setShowAddQuestion(!showAddQuestion)} className="bg-[#F5B731] text-[#1B2B4B] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#F5B731]/90 transition-all">+ Add Question</button>
-            <label className="bg-white text-[#1B2B4B] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-white/90 transition-all cursor-pointer">
-              {bulkUploading ? 'Uploading...' : '📄 Bulk Upload'}
-              <input type="file" accept=".csv" onChange={handleBulkUpload} className="hidden" disabled={bulkUploading} />
-            </label>
+            <button onClick={() => { setShowAddQuestion(!showAddQuestion); setShowBulkAdd(false) }} className="bg-[#F5B731] text-[#1B2B4B] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#F5B731]/90 transition-all">+ Add Question</button>
+            <button onClick={() => { setShowBulkAdd(!showBulkAdd); setShowAddQuestion(false) }} className="bg-white text-[#1B2B4B] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-white/90 transition-all">📋 Bulk Add</button>
           </div>
         </div>
       </header>
@@ -110,6 +135,66 @@ export default function ManageQuizPage() {
             {bulkResult} <button onClick={() => setBulkResult(null)} className="ml-2 underline">dismiss</button>
           </div>
         )}
+
+        {/* Bulk Add Section */}
+        {showBulkAdd && (
+          <div className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-[0_1px_3px_rgba(0,0,0,0.05)] p-6 mb-6">
+            <h3 className="font-semibold text-[#1B2B4B] mb-1">Bulk Add Questions</h3>
+            <p className="text-xs text-[#94A3B8] mb-4">Paste multiple questions in this format (separate each question with a blank line):</p>
+            <div className="bg-[#F8FAFC] rounded-xl p-3 mb-4 text-xs text-[#94A3B8] font-mono whitespace-pre-line border border-[#E2E8F0]">
+{`1. What is the capital of Nigeria?
+A. Lagos
+B. Abuja
+C. Kano
+D. Port Harcourt
+Answer: B
+
+2. Which river is the longest in Africa?
+A. Congo
+B. Nile
+C. Niger
+D. Zambezi
+Answer: B`}
+            </div>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className={labelClass}>Category (for all)</label>
+                <input type="text" value={bulkCategory} onChange={e => setBulkCategory(e.target.value)} className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Difficulty (for all)</label>
+                <select value={bulkDifficulty} onChange={e => setBulkDifficulty(e.target.value)} className={inputClass}>
+                  <option value="EASY">Easy</option><option value="MEDIUM">Medium</option><option value="HARD">Hard</option>
+                </select>
+              </div>
+            </div>
+            <div className="mb-4">
+              <label className={labelClass}>Paste Questions Here</label>
+              <textarea
+                value={bulkText}
+                onChange={e => setBulkText(e.target.value)}
+                rows={12}
+                placeholder="Paste your questions here..."
+                className={inputClass + " resize-y font-mono text-xs"}
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleBulkAdd}
+                disabled={bulkSaving || !bulkText.trim()}
+                className="bg-[#0F1C32] text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#1B2B4B] disabled:opacity-50 transition-all"
+              >
+                {bulkSaving ? 'Adding...' : `Add Questions`}
+              </button>
+              <button onClick={() => setShowBulkAdd(false)} className="px-6 py-2.5 rounded-xl text-sm text-[#1B2B4B] bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-white transition-all">Cancel</button>
+              {bulkText.trim() && (
+                <span className="text-xs text-[#94A3B8]">{parseBulkQuestions(bulkText).length} question(s) detected</span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Single Add Section */}
         {showAddQuestion && (
           <div className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-[0_1px_3px_rgba(0,0,0,0.05)] p-6 mb-6">
             <h3 className="font-semibold text-[#1B2B4B] mb-4">Add Question</h3>
