@@ -91,7 +91,7 @@ export default function RegisterPage() {
           <div className="bg-[#FEF3C7] rounded-xl p-3 mb-6 flex items-center gap-2">
             <LuMapPin className="w-4 h-4 text-[#F5B731] flex-shrink-0" />
             <span className="text-sm text-[#1B2B4B]">
-              Registering for <strong>{form.state}</strong> via referral
+              Registering for <strong>{form.state}</strong>
             </span>
           </div>
 
