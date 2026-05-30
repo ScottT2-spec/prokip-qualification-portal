@@ -1,8 +1,23 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { LuUsers, LuFileText, LuCircleCheck, LuCircleX, LuClock, LuGraduationCap, LuDownload } from 'react-icons/lu'
+import { LuUsers, LuFileText, LuCircleCheck, LuCircleX, LuClock, LuGraduationCap, LuDownload, LuLink, LuCopy, LuPlus, LuPower, LuPowerOff } from 'react-icons/lu'
+
+interface ReferralLink {
+  id: string
+  code: string
+  stateId: string
+  isActive: boolean
+  usedCount: number
+  createdAt: string
+}
+
+interface ManagerState {
+  id: string
+  name: string
+  country: string
+}
 
 export default function ManagerDashboard() {
   const router = useRouter()
@@ -12,6 +27,13 @@ export default function ManagerDashboard() {
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
+
+  // Referral link state
+  const [referralLinks, setReferralLinks] = useState<ReferralLink[]>([])
+  const [managerStates, setManagerStates] = useState<ManagerState[]>([])
+  const [generatingLink, setGeneratingLink] = useState(false)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [togglingId, setTogglingId] = useState<string | null>(null)
 
   const loadData = async () => {
     try {
@@ -23,7 +45,55 @@ export default function ManagerDashboard() {
       if (dashRes.ok) setData(await dashRes.json())
     } catch { router.push('/login') } finally { setLoading(false) }
   }
+
+  const loadReferralLinks = useCallback(async () => {
+    try {
+      const res = await fetch('/api/referral-links')
+      if (res.ok) {
+        const json = await res.json()
+        setReferralLinks(json.links || [])
+        setManagerStates(json.states || [])
+      }
+    } catch {}
+  }, [])
+
   useEffect(() => { loadData() }, [page, search])
+  useEffect(() => { if (user) { loadReferralLinks() } }, [user, loadReferralLinks])
+
+  const handleGenerateLink = async (stateId: string) => {
+    setGeneratingLink(true)
+    try {
+      const res = await fetch('/api/referral-links', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stateId }),
+      })
+      if (res.ok) {
+        await loadReferralLinks()
+      }
+    } catch {} finally { setGeneratingLink(false) }
+  }
+
+  const handleToggleLink = async (linkId: string, isActive: boolean) => {
+    setTogglingId(linkId)
+    try {
+      const res = await fetch('/api/referral-links', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ linkId, isActive }),
+      })
+      if (res.ok) {
+        setReferralLinks(prev => prev.map(l => l.id === linkId ? { ...l, isActive } : l))
+      }
+    } catch {} finally { setTogglingId(null) }
+  }
+
+  const copyLink = (link: ReferralLink) => {
+    const url = `${window.location.origin}/register/${link.code}`
+    navigator.clipboard.writeText(url)
+    setCopiedId(link.id)
+    setTimeout(() => setCopiedId(null), 2000)
+  }
 
   const handleExport = async (format: string) => {
     setExporting(true)
@@ -40,6 +110,9 @@ export default function ManagerDashboard() {
   const metrics = data?.metrics || {}; const agents = data?.agents || []
   const statusColors: Record<string, string> = { NOT_STARTED: 'bg-[#E2E8F0] text-[#94A3B8]', IN_PROGRESS: 'bg-[#FEF3C7] text-[#F5B731]', SUBMITTED: 'bg-[#007bff]/10 text-[#007bff]', PASSED: 'bg-[#28a745]/10 text-[#28a745]', FAILED: 'bg-[#dc3545]/10 text-[#dc3545]' }
 
+  const activeLinks = referralLinks.filter(l => l.isActive)
+  const inactiveLinks = referralLinks.filter(l => !l.isActive)
+
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <header className="bg-[#1B2B4B]">
@@ -49,6 +122,7 @@ export default function ManagerDashboard() {
         </div>
       </header>
       <main className="max-w-7xl mx-auto px-4 py-6">
+        {/* Metrics */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
           {[
             { label: 'Registered', value: metrics.totalRegistered, icon: <LuUsers className="w-5 h-5 text-[#1B2B4B]" /> },
@@ -64,12 +138,89 @@ export default function ManagerDashboard() {
             </div>
           ))}
         </div>
+
+        {/* Referral Links Section */}
+        <div className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-[0_1px_3px_rgba(0,0,0,0.05)] p-5 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <LuLink className="w-5 h-5 text-[#1B2B4B]" />
+              <h2 className="text-base font-bold text-[#1B2B4B]">Referral Links</h2>
+              <span className="text-xs bg-[#E2E8F0] text-[#94A3B8] px-2 py-0.5 rounded-full">{activeLinks.length} active</span>
+            </div>
+            {managerStates.length > 0 && (
+              <div className="flex gap-2">
+                {managerStates.map(state => (
+                  <button
+                    key={state.id}
+                    onClick={() => handleGenerateLink(state.id)}
+                    disabled={generatingLink}
+                    className="bg-[#F5B731] text-[#1B2B4B] px-3 py-1.5 rounded-xl text-sm font-semibold hover:bg-[#F5B731]/90 disabled:opacity-50 transition-all inline-flex items-center gap-1.5"
+                  >
+                    <LuPlus className="w-4 h-4" />
+                    Generate Link{managerStates.length > 1 ? ` (${state.name})` : ''}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {referralLinks.length === 0 ? (
+            <p className="text-sm text-[#94A3B8] text-center py-6">No referral links yet. Generate one to start onboarding agents.</p>
+          ) : (
+            <div className="space-y-2">
+              {[...activeLinks, ...inactiveLinks].map(link => {
+                const regUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/register/${link.code}`
+                return (
+                  <div key={link.id} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${link.isActive ? 'border-[#E2E8F0] bg-[#F8FAFC]' : 'border-[#E2E8F0]/50 bg-[#F8FAFC]/50 opacity-60'}`}>
+                    <div className="flex-1 min-w-0 mr-3">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <code className="text-sm font-mono text-[#1B2B4B] truncate">{regUrl}</code>
+                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${link.isActive ? 'bg-[#28a745]/10 text-[#28a745]' : 'bg-[#dc3545]/10 text-[#dc3545]'}`}>
+                          {link.isActive ? 'ACTIVE' : 'INACTIVE'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-[#94A3B8]">
+                        <span><LuUsers className="w-3 h-3 inline mr-1" />{link.usedCount} registered</span>
+                        <span>Created {new Date(link.createdAt).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => copyLink(link)}
+                        className="p-2 rounded-lg hover:bg-[#E2E8F0] transition-colors text-[#1B2B4B]"
+                        title="Copy link"
+                      >
+                        {copiedId === link.id ? (
+                          <LuCircleCheck className="w-4 h-4 text-[#28a745]" />
+                        ) : (
+                          <LuCopy className="w-4 h-4" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => handleToggleLink(link.id, !link.isActive)}
+                        disabled={togglingId === link.id}
+                        className={`p-2 rounded-lg transition-colors disabled:opacity-50 ${link.isActive ? 'hover:bg-[#dc3545]/10 text-[#dc3545]' : 'hover:bg-[#28a745]/10 text-[#28a745]'}`}
+                        title={link.isActive ? 'Deactivate' : 'Reactivate'}
+                      >
+                        {link.isActive ? <LuPowerOff className="w-4 h-4" /> : <LuPower className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Search & Export */}
         <div className="flex flex-wrap gap-3 mb-4">
           <input type="text" value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} placeholder="Search agents..."
             className="flex-1 min-w-[200px] bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm text-[#1B2B4B] outline-none focus:border-[#1B2B4B] focus:ring-[3px] focus:ring-[#1B2B4B]/10" />
           <button onClick={() => handleExport('csv')} disabled={exporting} className="bg-[#F5B731] text-[#1B2B4B] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#F5B731]/90 disabled:opacity-50 transition-all inline-flex items-center gap-1.5"><LuDownload className="w-4 h-4" /> CSV</button>
           <button onClick={() => handleExport('excel')} disabled={exporting} className="bg-[#0F1C32] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#1B2B4B] disabled:opacity-50 transition-all inline-flex items-center gap-1.5"><LuDownload className="w-4 h-4" /> Excel</button>
         </div>
+
+        {/* Agents Table */}
         <div className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-[0_1px_3px_rgba(0,0,0,0.05)] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
