@@ -31,6 +31,8 @@ export default function ExamInterface({ attemptId, quiz, existingAnswers, starte
   const [submitted, setSubmitted] = useState(false)
   const [result, setResult] = useState<{ passed: boolean; percentageScore: number; showResult: boolean; showScoreOnly: boolean } | null>(null)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const submittingRef = useRef(false)
+  const timeExpiredRef = useRef(false)
 
   const totalQuestions = quiz.questions.length
   const currentQuestion = quiz.questions[currentIndex]
@@ -47,12 +49,15 @@ export default function ExamInterface({ attemptId, quiz, existingAnswers, starte
     const tick = () => {
       const remaining = Math.max(0, Math.floor((end - Date.now()) / 1000))
       setTimeLeft(remaining)
-      if (remaining <= 0) handleSubmit()
+      if (remaining <= 0 && !timeExpiredRef.current) {
+        timeExpiredRef.current = true
+        handleSubmit()
+      }
     }
     tick()
     const interval = setInterval(tick, 1000)
     return () => clearInterval(interval)
-  }, [startedAt, quiz.duration])
+  }, [startedAt, quiz.duration, handleSubmit])
 
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
@@ -81,16 +86,21 @@ export default function ExamInterface({ attemptId, quiz, existingAnswers, starte
   const handleNext = () => { if (currentIndex < totalQuestions - 1) setCurrentIndex(prev => prev + 1) }
   const handlePrevious = () => { if (quiz.allowBackNavigation && currentIndex > 0) setCurrentIndex(prev => prev - 1) }
 
-  const handleSubmit = async () => {
-    if (isSubmitting) return
+  const handleSubmit = useCallback(async () => {
+    if (submittingRef.current) return
+    submittingRef.current = true
     setIsSubmitting(true)
     try {
       const res = await fetch(`/api/attempts/${attemptId}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
       const data = await res.json()
       setSubmitted(true)
       setResult(data.result)
-    } catch (err) { console.error('Submit failed:', err); setIsSubmitting(false) }
-  }
+    } catch (err) {
+      console.error('Submit failed:', err)
+      submittingRef.current = false
+      setIsSubmitting(false)
+    }
+  }, [attemptId])
 
   const answeredCount = answers.size
   const progress = totalQuestions > 0 ? Math.round((answeredCount / totalQuestions) * 100) : 0
@@ -120,6 +130,23 @@ export default function ExamInterface({ attemptId, quiz, existingAnswers, starte
           <button onClick={() => window.location.href = '/dashboard'} className="mt-8 w-full bg-[#0F1C32] text-white py-3 rounded-xl font-semibold hover:bg-[#1B2B4B] transition-all">
             Back to Dashboard
           </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (timeLeft <= 0 && !submitted) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4">
+        <div className="bg-white rounded-[24px] shadow-[0_25px_50px_rgba(0,0,0,0.15)] p-8 max-w-md w-full text-center border border-[#E2E8F0]">
+          <div className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center bg-[#F5B731]/10">
+            <svg className="w-10 h-10 text-[#F5B731] animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-[#1B2B4B] mb-2">Time&apos;s Up!</h2>
+          <p className="text-[#94A3B8]">Your exam is being submitted automatically...</p>
+          <div className="mt-6 w-12 h-12 border-4 border-[#E2E8F0] border-t-[#1B2B4B] rounded-full animate-spin mx-auto" />
         </div>
       </div>
     )
