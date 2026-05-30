@@ -14,6 +14,23 @@ export default function QuizzesPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [form, setForm] = useState({ title: '', description: '', duration: 30, passMark: 70, maxAttempts: 1, randomizeQuestions: false, randomizeOptions: false, allowBackNavigation: true, showResultToAgent: true, showScoreOnly: true })
   const [saving, setSaving] = useState(false)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState({ duration: 30, passMark: 70 })
+  const [editSaving, setEditSaving] = useState(false)
+
+  const startEdit = (quiz: Quiz) => {
+    setEditId(quiz.id)
+    setEditForm({ duration: quiz.duration, passMark: quiz.passMark })
+  }
+
+  const saveEdit = async () => {
+    if (!editId) return
+    setEditSaving(true)
+    try {
+      await fetch(`/api/quizzes/${editId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(editForm) })
+      setEditId(null); loadQuizzes()
+    } catch {} finally { setEditSaving(false) }
+  }
 
   const loadQuizzes = async () => { try { const res = await fetch('/api/quizzes'); if (res.ok) { const data = await res.json(); setQuizzes(data.quizzes) } } catch {} finally { setLoading(false) } }
   useEffect(() => { loadQuizzes() }, [])
@@ -85,6 +102,7 @@ export default function QuizzesPage() {
                   </div>
                 </div>
                 <div className="flex gap-2">
+                  <button onClick={() => startEdit(quiz)} className="text-sm text-[#1B2B4B] font-semibold hover:underline">Edit</button>
                   <Link href={`/admin/quizzes/${quiz.id}`} className="text-sm text-[#F5B731] font-semibold hover:underline">Manage</Link>
                   {quiz.status === 'DRAFT' && <button onClick={() => updateStatus(quiz.id, 'PUBLISHED')} className="text-sm text-[#28a745] font-semibold hover:underline">Publish</button>}
                   {quiz.status === 'PUBLISHED' && <button onClick={() => updateStatus(quiz.id, 'CLOSED')} className="text-sm text-[#dc3545] font-semibold hover:underline">Close</button>}
@@ -92,6 +110,22 @@ export default function QuizzesPage() {
               </div>
             </div>
           ))}
+          {editId && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-[20px] shadow-xl p-6 w-full max-w-sm">
+                <h3 className="font-semibold text-[#1B2B4B] mb-4">Edit Quiz Settings</h3>
+                <div className="space-y-4">
+                  <div><label className={labelClass}>Duration (minutes)</label><input type="number" value={editForm.duration} onChange={e => setEditForm(p => ({...p, duration: parseInt(e.target.value) || 0}))} min={1} className={inputClass} /></div>
+                  <div><label className={labelClass}>Pass Mark (%)</label><input type="number" value={editForm.passMark} onChange={e => setEditForm(p => ({...p, passMark: parseInt(e.target.value) || 0}))} min={1} max={100} className={inputClass} /></div>
+                  <div className="flex gap-2">
+                    <button onClick={saveEdit} disabled={editSaving} className="flex-1 bg-[#0F1C32] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#1B2B4B] disabled:opacity-50 transition-all">{editSaving ? 'Saving...' : 'Save'}</button>
+                    <button onClick={() => setEditId(null)} className="flex-1 py-2.5 rounded-xl text-sm text-[#1B2B4B] bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-white transition-all">Cancel</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {!loading && quizzes.length === 0 && <div className="text-center py-12 text-[#94A3B8]"><p className="flex justify-center mb-2"><LuFileText className="w-10 h-10" /></p><p>No quizzes yet. Create your first one!</p></div>}
         </div>
       </main>
