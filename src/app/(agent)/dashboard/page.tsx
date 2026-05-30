@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import {
   LuGraduationCap, LuFileText, LuCircleCheck, LuCircleX, LuClock, LuRefreshCw
 } from 'react-icons/lu'
-import ExamIntegrityNotice from '@/components/ExamIntegrityNotice'
+
 
 interface Quiz {
   id: string; title: string; description: string; duration: number; status: string
@@ -20,7 +20,7 @@ export default function AgentDashboard() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([])
   const [loading, setLoading] = useState(true)
   const [starting, setStarting] = useState<string | null>(null)
-  const [pendingQuizId, setPendingQuizId] = useState<string | null>(null)
+
 
   useEffect(() => {
     async function load() {
@@ -38,12 +38,7 @@ export default function AgentDashboard() {
     load()
   }, [router])
 
-  const confirmStartQuiz = (quizId: string) => {
-    setPendingQuizId(quizId)
-  }
-
   const startQuiz = async (quizId: string) => {
-    setPendingQuizId(null)
     setStarting(quizId)
     try {
       const res = await fetch('/api/attempts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quizId }) })
@@ -68,13 +63,6 @@ export default function AgentDashboard() {
           <button onClick={handleLogout} className="text-sm text-[#94A3B8] hover:text-white transition-colors">Sign Out</button>
         </div>
       </header>
-
-      {pendingQuizId && (
-        <ExamIntegrityNotice
-          onAccept={() => startQuiz(pendingQuizId)}
-          buttonLabel="Start Examination"
-        />
-      )}
 
       <main className="max-w-4xl mx-auto px-4 py-8">
         <h2 className="text-xl font-bold text-[#1B2B4B] mb-6">Available Examinations</h2>
@@ -112,7 +100,7 @@ export default function AgentDashboard() {
                       {isSubmitted ? (
                         <span className="text-sm text-[#94A3B8]">Completed</span>
                       ) : (
-                        <button onClick={() => isInProgress ? router.push(`/exam/${lastAttempt.id}`) : confirmStartQuiz(quiz.id)} disabled={starting === quiz.id}
+                        <button onClick={() => isInProgress ? router.push(`/exam/${lastAttempt.id}`) : startQuiz(quiz.id)} disabled={starting === quiz.id}
                           className="bg-[#0F1C32] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#1B2B4B] hover:-translate-y-0.5 disabled:opacity-50 transition-all whitespace-nowrap">
                           {starting === quiz.id ? 'Starting...' : isInProgress ? 'Continue' : 'Start Exam'}
                         </button>
