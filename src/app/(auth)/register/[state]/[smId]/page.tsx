@@ -120,11 +120,7 @@ export default function RegisterPage() {
                   <option value="Nigeria">Nigeria</option>
                   <option value="Ghana">Ghana</option>
                   <option value="Kenya">Kenya</option>
-                  <option value="South Africa">South Africa</option>
-                  <option value="Tanzania">Tanzania</option>
-                  <option value="Uganda">Uganda</option>
                   <option value="Rwanda">Rwanda</option>
-                  <option value="Other">Other</option>
                 </select>
               </div>
               <div>

@@ -123,7 +123,7 @@ export default function StateManagersPage() {
                   <div key={i} className="flex gap-2 mb-2">
                     <input type="text" value={s.name} onChange={e => { const arr = [...stateInputs]; arr[i] = { ...arr[i], name: e.target.value }; setStateInputs(arr) }} placeholder="State name (e.g. Kano)" required className="flex-1 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm text-[#1B2B4B] outline-none focus:border-[#1B2B4B]" />
                     <select value={s.country} onChange={e => { const arr = [...stateInputs]; arr[i] = { ...arr[i], country: e.target.value }; setStateInputs(arr) }} className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm text-[#1B2B4B] outline-none focus:border-[#1B2B4B]">
-                      <option value="Nigeria">Nigeria</option><option value="Ghana">Ghana</option><option value="Kenya">Kenya</option><option value="South Africa">South Africa</option>
+                      <option value="Nigeria">Nigeria</option><option value="Ghana">Ghana</option><option value="Kenya">Kenya</option><option value="Rwanda">Rwanda</option>
                     </select>
                     {stateInputs.length > 1 && (
                       <button type="button" onClick={() => setStateInputs(stateInputs.filter((_, j) => j !== i))} className="text-[#dc3545] hover:bg-[#dc3545]/10 p-2 rounded-lg transition-colors">
