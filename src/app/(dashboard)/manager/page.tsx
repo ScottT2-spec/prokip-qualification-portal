@@ -4,11 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
-  LuUsers, LuFileText, LuCircleCheck, LuCircleX, LuClock,
-  LuGraduationCap, LuDownload, LuLink, LuCopy, LuPlus,
-  LuPower, LuPowerOff, LuTrash2, LuChevronDown, LuChevronUp,
-  LuPercent, LuTrendingUp, LuTrendingDown, LuTimer, LuTarget,
-  LuFilter, LuArrowUpDown, LuX, LuCalendar, LuLoader2
+  LuUsers, LuFileText, LuCircleCheck, LuCircleX, LuClock, LuGraduationCap, LuDownload, LuLink, LuCopy, LuPlus, LuPower, LuPowerOff, LuTrash2, LuChevronDown, LuChevronUp, LuChartBar, LuTrendingUp, LuTrendingDown, LuCircleDot, LuFilter, LuArrowUpDown, LuX
 } from 'react-icons/lu'
 
 interface ReferralLink {
@@ -256,8 +252,8 @@ export default function ManagerDashboard() {
         {/* ── Extended Metrics Row ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {[
-            { label: 'Pass Rate', value: metrics.passRate != null ? `${metrics.passRate}%` : '—', icon: <LuTarget className="w-5 h-5 text-[#007bff]" /> },
-            { label: 'Avg Score', value: metrics.avgScore != null ? `${metrics.avgScore}%` : '—', icon: <LuPercent className="w-5 h-5 text-[#F5B731]" /> },
+            { label: 'Pass Rate', value: metrics.passRate != null ? `${metrics.passRate}%` : '—', icon: <LuCircleDot className="w-5 h-5 text-[#007bff]" /> },
+            { label: 'Avg Score', value: metrics.avgScore != null ? `${metrics.avgScore}%` : '—', icon: <LuChartBar className="w-5 h-5 text-[#F5B731]" /> },
             { label: 'Highest Score', value: metrics.highestScore != null ? `${metrics.highestScore}%` : '—', icon: <LuTrendingUp className="w-5 h-5 text-[#28a745]" /> },
             { label: 'Lowest Score', value: metrics.lowestScore != null ? `${metrics.lowestScore}%` : '—', icon: <LuTrendingDown className="w-5 h-5 text-[#dc3545]" /> },
           ].map((m, i) => (
@@ -272,7 +268,7 @@ export default function ManagerDashboard() {
         {/* Avg Completion Time — full width accent card */}
         <div className="bg-[#1B2B4B] rounded-[16px] p-4 mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <LuTimer className="w-6 h-6 text-[#F5B731]" />
+            <LuClock className="w-6 h-6 text-[#F5B731]" />
             <div>
               <p className="text-[11px] font-semibold tracking-wider text-[#94A3B8] uppercase">Avg Completion Time</p>
               <p className="text-2xl font-bold text-white">

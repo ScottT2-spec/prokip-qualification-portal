@@ -2,7 +2,9 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { LuUsers, LuLink, LuPlus, LuCopy, LuCircleCheck, LuPowerOff, LuPower, LuTrash2, LuRefreshCw, LuChevronDown, LuChevronUp } from 'react-icons/lu'
+import {
+  LuUsers, LuLink, LuPlus, LuCopy, LuCircleCheck, LuPowerOff, LuPower, LuTrash2, LuRefreshCw, LuChevronDown, LuChevronUp
+} from 'react-icons/lu'
 
 interface SmInvite {
   id: string

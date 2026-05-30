@@ -2,7 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { LuGraduationCap } from 'react-icons/lu'
+import {
+  LuGraduationCap
+} from 'react-icons/lu'
 
 export default function LoginPage() {
   const router = useRouter()

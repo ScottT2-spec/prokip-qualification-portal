@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { LuGraduationCap, LuCircleCheck, LuCircleX } from 'react-icons/lu'
+import {
+  LuGraduationCap, LuCircleCheck, LuCircleX
+} from 'react-icons/lu'
 
 export default function SmRegisterPage() {
   const router = useRouter()

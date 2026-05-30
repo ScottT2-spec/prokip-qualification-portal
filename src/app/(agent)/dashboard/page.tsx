@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { LuGraduationCap, LuFileText, LuCircleCheck, LuCircleX, LuClock, LuRefreshCw } from 'react-icons/lu'
+import {
+  LuGraduationCap, LuFileText, LuCircleCheck, LuCircleX, LuClock, LuRefreshCw
+} from 'react-icons/lu'
 
 interface Quiz {
   id: string; title: string; description: string; duration: number; status: string

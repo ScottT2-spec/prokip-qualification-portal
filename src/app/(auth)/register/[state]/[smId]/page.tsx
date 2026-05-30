@@ -2,7 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { LuGraduationCap, LuMapPin } from 'react-icons/lu'
+import {
+  LuGraduationCap, LuMapPin
+} from 'react-icons/lu'
 
 export default function RegisterPage() {
   const router = useRouter()

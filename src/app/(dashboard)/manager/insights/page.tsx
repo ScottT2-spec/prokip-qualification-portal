@@ -3,9 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
-  LuTarget, LuPercent, LuClock, LuUsers,
-  LuTrendingUp, LuTrendingDown, LuTimer, LuBarChart3,
-  LuCalendar, LuZap
+  LuCircleDot, LuChartBar, LuClock, LuUsers, LuTrendingUp, LuTrendingDown, LuCalendar, LuZap
 } from 'react-icons/lu'
 
 interface InsightsData {
@@ -77,14 +75,14 @@ export default function ManagerInsightsPage() {
         {/* Performance Metrics */}
         <div>
           <h2 className="text-sm font-bold text-[#1B2B4B] mb-3 flex items-center gap-2">
-            <LuBarChart3 className="w-4 h-4 text-[#F5B731]" /> Performance Metrics
+            <LuChartBar className="w-4 h-4 text-[#F5B731]" /> Performance Metrics
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {[
-              { label: 'Pass Rate', value: `${perf?.passRate ?? 0}%`, icon: <LuTarget className="w-5 h-5 text-[#28a745]" /> },
-              { label: 'Failure Rate', value: `${perf?.failureRate ?? 0}%`, icon: <LuTarget className="w-5 h-5 text-[#dc3545]" /> },
-              { label: 'Avg Score', value: `${perf?.avgScore ?? 0}%`, icon: <LuPercent className="w-5 h-5 text-[#F5B731]" /> },
-              { label: 'Avg Time', value: `${perf?.avgCompletionTime ?? 0}m`, icon: <LuTimer className="w-5 h-5 text-[#007bff]" /> },
+              { label: 'Pass Rate', value: `${perf?.passRate ?? 0}%`, icon: <LuCircleDot className="w-5 h-5 text-[#28a745]" /> },
+              { label: 'Failure Rate', value: `${perf?.failureRate ?? 0}%`, icon: <LuCircleDot className="w-5 h-5 text-[#dc3545]" /> },
+              { label: 'Avg Score', value: `${perf?.avgScore ?? 0}%`, icon: <LuChartBar className="w-5 h-5 text-[#F5B731]" /> },
+              { label: 'Avg Time', value: `${perf?.avgCompletionTime ?? 0}m`, icon: <LuClock className="w-5 h-5 text-[#007bff]" /> },
               { label: 'Candidates', value: perf?.totalCandidates ?? 0, icon: <LuUsers className="w-5 h-5 text-[#1B2B4B]" /> },
               { label: 'Attempts', value: perf?.totalAttempts ?? 0, icon: <LuClock className="w-5 h-5 text-[#94A3B8]" /> },
             ].map((m, i) => (
@@ -182,7 +180,7 @@ export default function ManagerInsightsPage() {
         {/* Score Distribution */}
         <div className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-[0_1px_3px_rgba(0,0,0,0.05)] p-5">
           <h3 className="text-sm font-bold text-[#1B2B4B] mb-4 flex items-center gap-2">
-            <LuBarChart3 className="w-4 h-4 text-[#007bff]" /> Score Distribution
+            <LuChartBar className="w-4 h-4 text-[#007bff]" /> Score Distribution
           </h3>
           <div className="flex items-end gap-3 h-48">
             {Object.entries(dist).map(([range, count]) => {

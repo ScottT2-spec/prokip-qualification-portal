@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { LuClock, LuFileText, LuUsers, LuTarget } from 'react-icons/lu'
+import {
+  LuClock, LuFileText, LuUsers, LuCircleDot
+} from 'react-icons/lu'
 
 interface Quiz { id: string; title: string; description: string; status: string; duration: number; passMark: number; maxAttempts: number; createdAt: string; _count: { questions: number; attempts: number } }
 
@@ -79,7 +81,7 @@ export default function QuizzesPage() {
                   </div>
                   <p className="text-sm text-[#94A3B8]">{quiz.description}</p>
                   <div className="flex gap-3 mt-2 text-xs text-[#94A3B8]">
-                    <span className="inline-flex items-center gap-1"><LuClock className="w-3.5 h-3.5" /> {quiz.duration}min</span><span className="inline-flex items-center gap-1"><LuFileText className="w-3.5 h-3.5" /> {quiz._count.questions} questions</span><span className="inline-flex items-center gap-1"><LuUsers className="w-3.5 h-3.5" /> {quiz._count.attempts} attempts</span><span className="inline-flex items-center gap-1"><LuTarget className="w-3.5 h-3.5" /> Pass: {quiz.passMark}%</span>
+                    <span className="inline-flex items-center gap-1"><LuClock className="w-3.5 h-3.5" /> {quiz.duration}min</span><span className="inline-flex items-center gap-1"><LuFileText className="w-3.5 h-3.5" /> {quiz._count.questions} questions</span><span className="inline-flex items-center gap-1"><LuUsers className="w-3.5 h-3.5" /> {quiz._count.attempts} attempts</span><span className="inline-flex items-center gap-1"><LuCircleDot className="w-3.5 h-3.5" /> Pass: {quiz.passMark}%</span>
                   </div>
                 </div>
                 <div className="flex gap-2">
