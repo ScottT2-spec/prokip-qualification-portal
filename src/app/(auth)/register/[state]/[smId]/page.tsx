@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { LuGraduationCap, LuMessageCircle } from 'react-icons/lu'
+import { LuGraduationCap, LuMapPin, LuMessageCircle } from 'react-icons/lu'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -75,6 +75,14 @@ export default function RegisterPage() {
         </div>
 
         <div className="bg-white rounded-[24px] shadow-[0_25px_50px_rgba(0,0,0,0.15)] p-6 sm:p-8">
+          {/* State badge */}
+          <div className="bg-[#FEF3C7] rounded-xl p-3 mb-6 flex items-center gap-2">
+            <LuMapPin className="w-4 h-4 text-[#F5B731] flex-shrink-0" />
+            <span className="text-sm text-[#1B2B4B]">
+              Registering for <strong>{form.state}</strong>
+            </span>
+          </div>
+
           {error && (
             <div className="bg-red-50 border border-red-100 text-red-700 text-sm rounded-xl p-3 mb-4">{error}</div>
           )}
