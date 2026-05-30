@@ -23,6 +23,33 @@ export default function ManageQuizPage() {
     options: [{ text: '', isCorrect: false }, { text: '', isCorrect: false }, { text: '', isCorrect: false }, { text: '', isCorrect: false }],
   })
   const [saving, setSaving] = useState(false)
+  const [showBulkAdd, setShowBulkAdd] = useState(false)
+  const [bulkText, setBulkText] = useState('')
+  const [bulkUploading, setBulkUploading] = useState(false)
+  const [bulkResult, setBulkResult] = useState<string | null>(null)
+
+  const handleBulkAdd = async () => {
+    if (!bulkText.trim()) return
+    setBulkUploading(true); setBulkResult(null)
+    try {
+      const lines = bulkText.trim().split('\n').filter(l => l.trim())
+      const questions = lines.map(line => {
+        const parts = line.split('|').map(p => p.trim())
+        const q: any = { text: parts[0], type: 'MULTIPLE_CHOICE', difficulty: 'MEDIUM', marks: 1, options: [] }
+        const optParts = parts.slice(1)
+        optParts.forEach(p => {
+          if (p.startsWith('*')) q.options.push({ text: p.slice(1).trim(), isCorrect: true })
+          else q.options.push({ text: p, isCorrect: false })
+        })
+        return q
+      }).filter(q => q.text && q.options.length >= 2)
+      const res = await fetch('/api/questions/bulk', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quizId, questions }) })
+      const data = await res.json()
+      if (res.ok) { setBulkResult(`✅ ${data.created || questions.length} questions added`); setBulkText(''); setShowBulkAdd(false); loadQuiz() }
+      else setBulkResult(`❌ ${data.error}`)
+    } catch { setBulkResult('❌ Failed to parse') }
+    finally { setBulkUploading(false) }
+  }
 
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -128,11 +155,32 @@ export default function ManageQuizPage() {
             <Link href="/admin/quizzes" className="text-sm text-[#94A3B8] hover:text-white transition-colors">← Back to Quizzes</Link>
             <h1 className="text-lg font-bold text-white mt-1">{quiz?.title}</h1>
           </div>
-          <button onClick={() => setShowAddQuestion(!showAddQuestion)} className="bg-[#F5B731] text-[#1B2B4B] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#F5B731]/90 transition-all">+ Add Question</button>
+          <div className="flex gap-2">
+            <button onClick={() => setShowAddQuestion(!showAddQuestion)} className="bg-[#F5B731] text-[#1B2B4B] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#F5B731]/90 transition-all">+ Add Question</button>
+            <button onClick={() => setShowBulkAdd(!showBulkAdd)} className="bg-white text-[#1B2B4B] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-white/90 transition-all">📄 Bulk Add</button>
+          </div>
         </div>
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-6">
+        {bulkResult && (
+          <div className={`rounded-xl p-3 mb-4 text-sm ${bulkResult.startsWith('✅') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+            {bulkResult} <button onClick={() => setBulkResult(null)} className="ml-2 underline">dismiss</button>
+          </div>
+        )}
+
+        {showBulkAdd && (
+          <div className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-[0_1px_3px_rgba(0,0,0,0.05)] p-6 mb-6">
+            <h3 className="font-semibold text-[#1B2B4B] mb-2">Bulk Add Questions</h3>
+            <p className="text-xs text-[#94A3B8] mb-3">One question per line. Format: <code>Question text|Option A|*Correct Option|Option C|Option D</code> (prefix correct answer with *)</p>
+            <textarea value={bulkText} onChange={e => setBulkText(e.target.value)} rows={8} placeholder={"What is 2+2?|3|*4|5|6\nWhat color is the sky?|Red|*Blue|Green|Yellow"} className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm text-[#1B2B4B] outline-none focus:border-[#1B2B4B] focus:ring-[3px] focus:ring-[#1B2B4B]/10 resize-none font-mono" />
+            <div className="flex gap-2 mt-3">
+              <button onClick={handleBulkAdd} disabled={bulkUploading || !bulkText.trim()} className="bg-[#0F1C32] text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#1B2B4B] disabled:opacity-50 transition-all">{bulkUploading ? 'Adding...' : 'Add All'}</button>
+              <button onClick={() => setShowBulkAdd(false)} className="px-6 py-2.5 rounded-xl text-sm text-[#1B2B4B] bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-white transition-all">Cancel</button>
+            </div>
+          </div>
+        )}
+
         {/* ── Add Question Form ── */}
         {showAddQuestion && (
           <div className="bg-white rounded-[16px] border border-[#E2E8F0] shadow-[0_1px_3px_rgba(0,0,0,0.05)] p-6 mb-6">
