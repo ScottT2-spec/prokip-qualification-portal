@@ -16,8 +16,8 @@ export default function QuestionsPage() {
 
   const loadQuestions = async () => {
     const params = new URLSearchParams({ page: page.toString(), limit: '20' })
-    if (search) params.set('search', search); if (filterType) params.set('type', filterType); if (filterDifficulty) params.set('difficulty', filterDifficulty)
-    try { const res = await fetch(`/api/questions?${params}`); if (res.ok) { const data = await res.json(); setQuestions(data.questions); setTotal(data.total) } } catch {} finally { setLoading(false) }
+    if (search) params.set('search', search); if (filterType) params.set('filter_type', filterType); if (filterDifficulty) params.set('filter_difficulty', filterDifficulty)
+    try { const res = await fetch(`/api/questions?${params}`); if (res.ok) { const json = await res.json(); setQuestions(json.data || json.questions || []); setTotal(json.pagination?.total ?? json.total ?? 0) } } catch {} finally { setLoading(false) }
   }
   useEffect(() => { loadQuestions() }, [page, search, filterType, filterDifficulty])
 
