@@ -76,7 +76,7 @@ export async function GET(req: NextRequest) {
     // Metrics (cached 30s per manager)
     const metricsCacheKey = `sm_metrics_${session.id}`
     const metrics = await queryCache.wrap(metricsCacheKey, async () => {
-      const [allAgents, submitted, passed, failed, attempts] = await Promise.all([
+      const [allAgents, submitted, passed, failed, attempts, results] = await Promise.all([
         prisma.user.count({ where: { role: 'AGENT', state: { in: stateNames } } }),
         prisma.quizAttempt.count({
           where: { status: 'SUBMITTED', user: { state: { in: stateNames } } },
@@ -91,10 +91,20 @@ export async function GET(req: NextRequest) {
           where: { status: 'SUBMITTED', startedAt: { not: null }, submittedAt: { not: null }, user: { state: { in: stateNames } } },
           select: { startedAt: true, submittedAt: true },
         }),
+        prisma.result.findMany({
+          where: { attempt: { user: { state: { in: stateNames } } } },
+          select: { percentageScore: true },
+        }),
       ])
       const times = attempts.filter(a => a.startedAt && a.submittedAt).map(a => (new Date(a.submittedAt!).getTime() - new Date(a.startedAt!).getTime()) / 60000)
       const avgCompletionTime = times.length > 0 ? Math.round((times.reduce((a, b) => a + b, 0) / times.length) * 10) / 10 : null
-      return { totalRegistered: allAgents, submitted, passed, failed, avgCompletionTime }
+      const scores = results.map(r => r.percentageScore)
+      const avgScore = scores.length > 0 ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 100) / 100 : 0
+      const highestScore = scores.length > 0 ? Math.round(Math.max(...scores) * 100) / 100 : 0
+      const lowestScore = scores.length > 0 ? Math.round(Math.min(...scores) * 100) / 100 : 0
+      const passRate = submitted > 0 ? Math.round((passed / submitted) * 10000) / 100 : 0
+      const notStarted = allAgents - submitted
+      return { totalRegistered: allAgents, submitted, passed, failed, notStarted, avgCompletionTime, passRate, avgScore, highestScore, lowestScore }
     }, 30_000)
 
     const response = paginatedResponse(
