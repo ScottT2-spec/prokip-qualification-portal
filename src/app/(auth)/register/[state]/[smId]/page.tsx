@@ -123,7 +123,7 @@ export default function RegisterPage() {
               </div>
               <div>
                 <label className={labelClass}>State / Region</label>
-                <input type="text" name="state" value={form.state} onChange={handleChange} required className={inputClass} />
+                <input type="text" name="state" value={form.state} readOnly className={inputClass + " bg-[#E2E8F0] cursor-not-allowed text-[#94A3B8]"} />
               </div>
             </div>
             <div>
