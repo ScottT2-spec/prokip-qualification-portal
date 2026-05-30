@@ -197,7 +197,7 @@ export default function ManagerDashboard() {
   )
 
   const metrics = data?.metrics || {}
-  const agents = data?.agents || []
+  const agents = data?.data || data?.agents || []
   const statusColors: Record<string, string> = {
     NOT_STARTED: 'bg-[#E2E8F0] text-[#94A3B8]',
     IN_PROGRESS: 'bg-[#FEF3C7] text-[#F5B731]',
